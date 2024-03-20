@@ -1,13 +1,22 @@
-import { Controller, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, UseGuards, Body } from '@nestjs/common';
 import { Get } from '@nestjs/common';
+import { Users } from '@prisma/client';
 //import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
+//import { Request } from 'express';
+import { GetUser } from 'src/auth/decorators';
 import { jwtguard } from 'src/auth/guard';
+import { UserService } from './user.service';
+import { ActivateDeviceDto } from './dto';
+@UseGuards(jwtguard)
 @Controller('user')
 export class UserController {
-  @UseGuards(jwtguard)
+  constructor(private userservice: UserService) {}
   @Get('me')
-  getMe(@Req() req: Request) {
-    return req.user;
+  getMe(@GetUser() user: Users) {
+    return user;
+  }
+  @Post('ActiviateDevice')
+  ActiviateDecvice(@Body() dto: ActivateDeviceDto) {
+    return this.userservice.ActiviteDevice(dto);
   }
 }
