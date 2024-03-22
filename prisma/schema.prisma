@@ -17,10 +17,13 @@ model Users {
   id        Int      @id @default(autoincrement())
   email String @unique
   createdAt DateTime @default(now())
-  firstName String?
-  lastName  String?
-  hash String?
+  firstName String
+  lastName  String
+  BloodType String
+  hash String
   Devices Device[]
+  AccountPreviewRequest PreviewerList[]
+  Account accounts?
   @@map("Users")
 } 
 
@@ -31,4 +34,29 @@ model Device {
   ownerID Int?
   owner Users? @relation(fields: [ownerID], references: [id])
   @@map("Devices")
+}
+
+model accounts {
+  AccId Int @id @default(autoincrement())
+  AccountOwner Int @unique
+  accountowner Users @relation(fields: [AccountOwner], references: [id])
+  HeartRecord Heart_Rate_Record?
+  AutherizedPreviewers PreviewerList?
+}
+model PreviewerList {
+  id Int @id @default(autoincrement())
+  PreviewedId Int @unique
+  state String
+  previewed accounts @relation(fields: [PreviewedId], references: [AccId])
+  PreviewerId Int
+  previewer Users @relation(fields: [PreviewerId], references: [id])
+}
+
+model Heart_Rate_Record {
+  Rid      Int @id @default(autoincrement())
+  RateValue   Int
+  timeStamp   DateTime
+  AutherDevice Int
+  OwnerID Int @unique
+  owner accounts @relation(fields: [OwnerID], references: [AccId])
 }
