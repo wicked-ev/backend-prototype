@@ -16,6 +16,10 @@ export class AuthDto {
   @IsString()
   @IsNotEmpty()
   password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  BloodType: string;
 }
 
 export class AuthDto2 {
