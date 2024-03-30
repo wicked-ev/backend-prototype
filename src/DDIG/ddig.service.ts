@@ -3,25 +3,19 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { DDIGDto } from './dto/DDIG.dto';
 import * as argon from 'argon2';
 import { ConfigService } from '@nestjs/config';
-import { connect, IClientOptions } from 'mqtt/*';
-import {
-  createReadStream,
-  mkdirSync,
-  statSync,
-  writeFileSync,
-  constants,
-  accessSync,
-  readFile,
-  writeFile,
-} from 'fs';
-
+import { connect, IClientOptions } from 'mqtt';
+import Bottleneck from 'bottleneck';
 @Injectable()
 export class DdigService {
+  private messagesQueue: Bottleneck;
+  private BrokerUrl: string;
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
-  ) {}
-
+  ) {
+    this.BrokerUrl = this.config.get('BROKER_URL');
+    this.messagesQueue = new Bottleneck({ maxConcurrent: 1, reservoir: 50 });
+  }
   async DDIG(dto: DDIGDto) {
     const device = await this.prisma.device.findUnique({
       where: {
@@ -36,17 +30,7 @@ export class DdigService {
       throw new Error('Device not owned');
     } else {
       const topic = await this.CreateTopic(dto.sid, device.ownerID);
-      const payload = this.CheckifTempStorage(device.ownerID);
-      //this.connection(topic, device.ownerID, device.ownerID,);
-      if (!payload.State) {
-        this.CreateNewTempStorage(payload.Path);
-        const data = this.Readfile(payload.State + '/index.txt');
-        const indexContext: number = this.GetIndexFileContext(data);
-        this.connection(topic, device.ownerID, payload.Path, indexContext);
-        // const indexfilePath: string = payload.Path + '/index.txt';
-        //const readStream = createReadStream(indexfilePath);
-      }
-
+      this.connection(topic, device.ownerID, dto.sid);
       return { Topic: topic, permissions: true };
     }
   }
@@ -58,14 +42,13 @@ export class DdigService {
     return Topic;
   }
 
-  connection(
-    topic: string,
-    deviceOwnerID: number,
-    StoragePath: string,
-    indexContext: number,
-  ) {
-    const BrokerUrl = this.config.get('BROKER_URL');
-    const client = connect(BrokerUrl, this.CreateMqttOption(deviceOwnerID));
+  async connection(topic: string, deviceOwnerID: number, deviceID: number) {
+    let msgCounter: number = 0;
+    const Databuffer = [0, 0, 0];
+    const client = connect(
+      this.BrokerUrl,
+      this.CreateMqttOption(deviceOwnerID),
+    );
     client.on('connect', () => {
       console.log('connect to broker');
       client.subscribe(topic, (err) => {
@@ -75,103 +58,52 @@ export class DdigService {
           console.log('subscribed to Topic!');
         }
         client.on('message', (message) => {
-          this.DataHandeler(message.toString(), StoragePath, indexContext);
           console.log(`Received message on topic ${message.toString()}`);
+          const data = this.ProcessMessage(message);
+          if (msgCounter < 5) {
+            Databuffer[0] = Databuffer[0] + data.beat;
+            Databuffer[1] = Databuffer[1] + data.ir_Reading;
+            Databuffer[2] = Databuffer[2] + data.redReading;
+            msgCounter++;
+          } else if (msgCounter == 5) {
+            this.SetMediandata(Databuffer, data);
+            data['OwnerID'] = deviceOwnerID;
+            data['DeviceID'] = deviceID;
+            this.ProcessTodb(data);
+          }
         });
       });
     });
   }
-  fileExists(filePath: string): boolean {
-    try {
-      // Check if the file exists
-      accessSync(filePath, constants.F_OK);
-      return true;
-    } catch (err) {
-      // File does not exist or cannot be accessed
-      return false;
-    }
-  }
-
-  CheckifTempStorage(UserID: number) {
-    try {
-      const VerfiyDir: string = '../../TempStorageCSV/' + UserID.toString();
-      const isDir: boolean = statSync(VerfiyDir).isDirectory();
-      return { Path: VerfiyDir, State: isDir };
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        return { Path: '', State: false };
-      } else console.log(err);
-    }
-  }
-
-  CreateNewTempStorage(UserPath: string) {
-    try {
-      mkdirSync(UserPath);
-      console.log('created Path successfully');
-      const MapIndex: string = 'lastFileIndex: 0\n';
-      this.CreateFile(UserPath, '/index.txt', MapIndex);
-      const csvMap: string = 'Index,ir_Reading,radReading,beats,TimeStamp\n';
-      this.CreateFile(UserPath, '0', csvMap);
-    } catch (err) {
-      if (err.code === 'EEXIST') {
-        console.log('file already exists');
-      } else {
-        return err;
-      }
-    }
-  }
-
-  DataHandeler(message: string, targetPath: string, indexContext: number) {
-    //const indexfilePath: string = targetPath + '/index.txt';
-    //const readStream = createReadStream(indexfilePath);
-    const filepath: string = this.CreateFile(
-      targetPath,
-      indexContext.toString(),
-    );
-    writeFile(filepath, message, (err) => {
-      if (err) {
-        console.error('Error writing to file:', err);
-      }
+  SetMediandata(Databuffer: Array<number>, data: object) {
+    Databuffer.every((value) => {
+      return (value = value / 5);
     });
+    data['beat'] = Databuffer[0];
+    data['ir_Reading'] = Databuffer[1];
+    data['ir_Reading'] = Databuffer[2];
+    Databuffer = [0, 0, 0];
+  }
+  ProcessMessage(message: string, DeviceID?: number, OwnerID?: number) {
+    const values = message.split(',');
+    const obj = {
+      OwnerID: OwnerID,
+      AutherDevice: DeviceID,
+      ir_Reading: parseInt(values[0]),
+      redReading: parseInt(values[1]),
+      beat: parseInt(values[2]),
+      timeStamp: values[3],
+    };
+    return obj;
   }
 
-  async updateIdexfile(StorgePath: string) {}
-
-  Readfile(filePath: string) {
-    readFile(filePath, 'utf-8', (err, data) => {
-      if (err) {
-        console.log(err);
-      }
-      return data;
-    });
-  }
-
-  GetIndexFileContext(data): number {
-    for (let i = 0; i < data.length; i++) {
-      if (data[i] == ':' && i + 1 < data.length) {
-        let newstr: string = data.slice(i + 1);
-        newstr = newstr.replace('/sg', '');
-        const strvalue = parseInt(newstr);
-        return strvalue;
-      }
+  async ProcessTodb(data: any) {
+    try {
+      await this.prisma.heart_Rate_Record.createMany(data);
+    } catch (err) {
+      console.log(err);
     }
   }
-  CreateFile(Path: string, fileName?: string, message: string = ''): string {
-    if (fileName !== undefined) {
-      const filePath = Path + '/' + fileName;
-      writeFileSync(filePath, message);
-      return filePath;
-    }
-    const currentTime: Date = new Date();
-    const filename: string =
-      currentTime.getFullYear().toString() +
-      currentTime.getDate().toString() +
-      currentTime.getHours().toString();
-    const filePath = Path + '/' + filename;
-    writeFileSync(filePath, message);
-    return filePath;
-  }
-
   CreateMqttOption(DeviceOwnerID: number) {
     const option: IClientOptions = {
       keepalive: 60,

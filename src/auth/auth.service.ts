@@ -20,7 +20,7 @@ export class AuthService {
         data: {
           email: dto.email,
           firstName: dto.firstname,
-          lastName: dto.email,
+          lastName: dto.lastname,
           BloodType: dto.BloodType,
           hash,
         },
