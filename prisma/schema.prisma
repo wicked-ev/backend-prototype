@@ -54,7 +54,9 @@ model PreviewerList {
 
 model Heart_Rate_Record {
   Rid      Int @id @default(autoincrement())
-  RateValue   Int
+  beat      Int
+  redReading   Int
+  ir_Reading   Int
   timeStamp   DateTime
   AutherDevice Int
   OwnerID Int @unique
