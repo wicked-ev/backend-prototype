@@ -22,7 +22,6 @@ model Users {
   BloodType String
   hash String
   Devices Device[]
-  AccountPreviewRequest PreviewerList[]
   Account accounts?
   @@map("Users")
 } 
@@ -33,6 +32,7 @@ model Device {
   createdAt DateTime @default(now())
   ownerID Int?
   owner Users? @relation(fields: [ownerID], references: [id])
+  userlist UserListRecords?
   @@map("Devices")
 }
 
@@ -40,25 +40,34 @@ model accounts {
   AccId Int @id @default(autoincrement())
   AccountOwner Int @unique
   accountowner Users @relation(fields: [AccountOwner], references: [id])
-  HeartRecord Heart_Rate_Record?
-  AutherizedPreviewers PreviewerList?
+  userRecord UserListRecords[] 
+  PreviewRequest PreviewerList[] @relation("Pre")
+  sentPreviewRequest PreviewerList[] @relation("PreReq")
 }
 model PreviewerList {
   id Int @id @default(autoincrement())
-  PreviewedId Int @unique
+  PreviewedAccountId Int
+  previewed accounts @relation(name:"Pre",fields: [PreviewedAccountId], references: [AccId])
+  PreviewerAccountId Int
+  previewer accounts @relation(name:"PreReq",fields: [PreviewerAccountId], references: [AccId])
   state String
-  previewed accounts @relation(fields: [PreviewedId], references: [AccId])
-  PreviewerId Int
-  previewer Users @relation(fields: [PreviewerId], references: [id])
 }
 
 model Heart_Rate_Record {
   Rid      Int @id @default(autoincrement())
+  ULRid     Int @unique
+  ulrid UserListRecords @relation(fields: [ULRid], references: [ULRid])
   beat      Int
   redReading   Int
   ir_Reading   Int
-  timeStamp   DateTime
-  AutherDevice Int
-  OwnerID Int @unique
-  owner accounts @relation(fields: [OwnerID], references: [AccId])
+  timeStamp DateTime @db.Timestamptz(3)
+}
+
+model UserListRecords {
+  ULRid Int @id @default(autoincrement())
+  AutherDeviceid Int @unique //each Record is unique based on the auther
+  device Device @relation(fields: [AutherDeviceid], references: [Sid])
+  User Int //not unique user can have mulitple records with diffrenet autherDevices
+  user accounts @relation(fields: [User], references: [AccountOwner])
+  HR_Record Heart_Rate_Record[]
 }
