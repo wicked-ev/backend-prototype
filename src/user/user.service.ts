@@ -2,19 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ActivateDeviceDto } from './dto/index';
 import { error } from 'console';
+import { Users } from '@prisma/client';
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
+  async GetAccount(user: Users) {
+    const account = await this.prisma.accounts.findUnique({
+      where: {
+        AccountOwner: user.id,
+      },
+    });
+    if (account) {
+      user['account'] = account;
+      return user;
+    } else {
+      throw new error('Account Not Found');
+    }
+  }
+
   async ActiviteDevice(dto: ActivateDeviceDto) {
     const DeviceStatus = await this.isDeviceOwned(dto.DeviceSID);
-    // const user = await this.prisma.users.update({
-    //     where:{
-    //         email: dto.email,
-    //         id: dto.Userid,
-    //     },
-    //     data:{
-    //     }
-    // })
     if (!DeviceStatus) {
       const deviceupdate = await this.prisma.device.update({
         where: {
