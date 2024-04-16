@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { DDIGDto } from './dto/DDIG.dto';
+import { UserService } from 'src/user/user.service';
+import { DDIGDto, ReceivedDataDto } from './dto/DDIG.dto';
 import * as argon from 'argon2';
 import { ConfigService } from '@nestjs/config';
 import { connect, IClientOptions } from 'mqtt';
@@ -12,38 +13,81 @@ export class DdigService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private userservice: UserService,
   ) {
     this.BrokerUrl = this.config.get('BROKER_URL');
     this.messagesQueue = new Bottleneck({ maxConcurrent: 1, reservoir: 50 });
   }
-  async DDIG(dto: DDIGDto) {
+  async GetDevice(sid: number) {
     const device = await this.prisma.device.findUnique({
       where: {
-        Sid: dto.sid,
+        Sid: sid,
       },
     });
-
     if (!device) {
       throw new Error('Device not found');
     }
-    if (!device.ownerID) {
-      throw new Error('Device not owned');
-    } else {
-      const topic = await this.CreateTopic(dto.sid, device.ownerID);
-      this.connection(topic, device.ownerID, dto.sid);
-      return { Topic: topic, permissions: true };
-    }
+    return device;
   }
+  async SDPR(dto: DDIGDto) {
+    const device = await this.GetDevice(dto.sid);
+
+    if (!device) {
+      throw new Error('Device not found');
+    } else if (!device.ownerID) {
+      throw new Error('Device not owned');
+    }
+    let devicerecord = await this.getDeviceRecord(dto.sid, device.ownerID);
+    if (!devicerecord) {
+      devicerecord = await this.CreateUserDeviceRecord(dto.sid, device.ownerID);
+    }
+    const topic = await this.CreateTopic(dto.sid, device.ownerID);
+    this.connection(topic, device.ownerID, dto.sid, devicerecord);
+    return { Topic: topic, permissions: true };
+  }
+
+  // async DDIG(dto: DDIGDto) {
+  //   SDPR : Send Data Permissions Requests
+  //   return '';
+  // }
+
   async CreateTopic(sidDevice: number, ownerid: number) {
-    const hashd = await argon.hash(sidDevice.toString());
-    const hasho = await argon.hash(ownerid.toString());
-    const Topic = 'topic/' + hashd + '/' + hasho;
+    const data: string = sidDevice.toString() + ownerid.toString();
+    const hashd = await argon.hash(data);
+    const Topic = 'deviceport/' + hashd;
     console.log(Topic);
     return Topic;
   }
 
-  async connection(topic: string, deviceOwnerID: number, deviceID: number) {
-    let msgCounter: number = 0;
+  async CreateUserDeviceRecord(sid: number, ownerid: number) {
+    const devicerecord = await this.prisma.userListRecords.create({
+      data: {
+        AutherDeviceid: sid,
+        User: ownerid,
+      },
+    });
+    return devicerecord;
+  }
+
+  async getDeviceRecord(sid: number, ownerid: number) {
+    const devicerecord = await this.prisma.userListRecords.findUnique({
+      where: {
+        AutherDeviceid: sid,
+        User: ownerid,
+      },
+    });
+    if (!devicerecord) {
+      return false;
+    }
+    return devicerecord;
+  }
+  async connection(
+    topic: string,
+    deviceOwnerID: number,
+    deviceID: number,
+    devicerecord: any,
+  ) {
+    //let msgCounter: number = 0;
     const Databuffer = [0, 0, 0];
     const client = connect(
       this.BrokerUrl,
@@ -60,17 +104,11 @@ export class DdigService {
         client.on('message', (message) => {
           console.log(`Received message on topic ${message.toString()}`);
           const data = this.ProcessMessage(message);
-          if (msgCounter < 5) {
-            Databuffer[0] = Databuffer[0] + data.beat;
-            Databuffer[1] = Databuffer[1] + data.ir_Reading;
-            Databuffer[2] = Databuffer[2] + data.redReading;
-            msgCounter++;
-          } else if (msgCounter == 5) {
-            this.SetMediandata(Databuffer, data);
-            data['OwnerID'] = deviceOwnerID;
-            data['DeviceID'] = deviceID;
-            this.ProcessTodb(data);
-          }
+          Databuffer[0] = data.beat;
+          Databuffer[1] = data.ir_Reading;
+          Databuffer[2] = data.redReading;
+          //this.SetMediandata(Databuffer, data);
+          this.ProcessTodb(data, devicerecord);
         });
       });
     });
@@ -86,20 +124,32 @@ export class DdigService {
   }
   ProcessMessage(message: string, DeviceID?: number, OwnerID?: number) {
     const values = message.split(',');
-    const obj = {
-      OwnerID: OwnerID,
-      AutherDevice: DeviceID,
-      ir_Reading: parseInt(values[0]),
-      redReading: parseInt(values[1]),
-      beat: parseInt(values[2]),
-      timeStamp: values[3],
-    };
-    return obj;
+
+    if (values.length !== 4) {
+      const timeStamp: Date = new Date(values[3]);
+      const obj = {
+        OwnerID: OwnerID,
+        AutherDevice: DeviceID,
+        ir_Reading: parseInt(values[0]),
+        redReading: parseInt(values[1]),
+        beat: parseInt(values[2]),
+        timeStamp: timeStamp,
+      };
+      return obj;
+    }
   }
 
-  async ProcessTodb(data: any) {
+  async ProcessTodb(data: ReceivedDataDto, devicerecord: any) {
     try {
-      await this.prisma.heart_Rate_Record.createMany(data);
+      await this.prisma.heart_Rate_Record.create({
+        data: {
+          ULRid: devicerecord.id,
+          ir_Reading: data.ir_Reading,
+          redReading: data.redReading,
+          beat: data.beat,
+          timeStamp: data.timeStamp,
+        },
+      });
     } catch (err) {
       console.log(err);
     }
