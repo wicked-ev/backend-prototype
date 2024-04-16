@@ -45,7 +45,7 @@ export class UserService {
     });
     if (!device) {
       throw new error('Device Not Found');
-    } else if (!device.ownerID) {
+    } else if (device.ownerID) {
       return true;
     } else {
       return false;
