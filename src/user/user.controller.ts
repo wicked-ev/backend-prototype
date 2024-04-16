@@ -7,13 +7,14 @@ import { GetUser } from 'src/auth/decorators';
 import { jwtguard } from 'src/auth/guard';
 import { UserService } from './user.service';
 import { ActivateDeviceDto } from './dto';
-@UseGuards(jwtguard)
+//@UseGuards(jwtguard)
 @Controller('user')
 export class UserController {
   constructor(private userservice: UserService) {}
   @Get('me')
+  @UseGuards(jwtguard)
   getMe(@GetUser() user: Users) {
-    return user;
+    return this.userservice.GetAccount(user);
   }
   @Post('ActiviateDevice')
   ActiviateDecvice(@Body() dto: ActivateDeviceDto) {

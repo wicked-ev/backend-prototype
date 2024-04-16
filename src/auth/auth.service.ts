@@ -20,11 +20,18 @@ export class AuthService {
         data: {
           email: dto.email,
           firstName: dto.firstname,
-          lastName: dto.email,
+          lastName: dto.lastname,
           BloodType: dto.BloodType,
           hash,
         },
       });
+      if (user) {
+        await this.prisma.accounts.create({
+          data: {
+            AccountOwner: user.id,
+          },
+        });
+      }
       return this.signToken(user.id, user.email);
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
@@ -50,6 +57,7 @@ export class AuthService {
     }
     return this.signToken(user.id, user.email);
   }
+
   async signToken(
     UserId: number,
     email: string,

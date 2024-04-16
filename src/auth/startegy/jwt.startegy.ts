@@ -11,9 +11,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private Prisma: PrismaService,
   ) {
     super({
-      jwtFormRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secrectOkey: config.get('JWT_SECRET'),
+      secretOrKey: config.get('JWT_SECRET'),
     });
   }
   async validate(payload: { sub: number; email: string }) {

@@ -5,9 +5,12 @@ import { Body, Post } from '@nestjs/common';
 @Controller('ddig')
 export class DdigController {
   constructor(private ddig: DdigService) {}
-
-  @Post('DDIG')
-  DDIG(@Body() dto: DDIGDto) {
-    return this.ddig.DDIG(dto);
+  //@Post('DDIG')
+  // DDIG(@Body() dto: DDIGDto) {
+  //   return this.ddig.DDIG(dto);
+  // }
+  @Post('SDPR')
+  SDPR(@Body() dto: DDIGDto) {
+    return this.ddig.SDPR(dto);
   }
 }
