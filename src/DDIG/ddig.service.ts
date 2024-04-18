@@ -88,7 +88,6 @@ export class DdigService {
     devicerecord: any,
   ) {
     //let msgCounter: number = 0;
-    const Databuffer = [0, 0, 0];
     const client = connect(
       this.BrokerUrl,
       this.CreateMqttOption(deviceOwnerID),
@@ -104,9 +103,6 @@ export class DdigService {
         client.on('message', (message) => {
           console.log(`Received message on topic ${message.toString()}`);
           const data = this.ProcessMessage(message);
-          Databuffer[0] = data.beat;
-          Databuffer[1] = data.ir_Reading;
-          Databuffer[2] = data.redReading;
           //this.SetMediandata(Databuffer, data);
           this.ProcessTodb(data, devicerecord);
         });
@@ -125,15 +121,14 @@ export class DdigService {
   ProcessMessage(message: string, DeviceID?: number, OwnerID?: number) {
     const values = message.split(',');
 
-    if (values.length !== 4) {
-      const timeStamp: Date = new Date(values[3]);
+    if (values.length == 4) {
       const obj = {
         OwnerID: OwnerID,
         AutherDevice: DeviceID,
         ir_Reading: parseInt(values[0]),
         redReading: parseInt(values[1]),
         beat: parseInt(values[2]),
-        timeStamp: timeStamp,
+        timeStamp: values[3],
       };
       return obj;
     }

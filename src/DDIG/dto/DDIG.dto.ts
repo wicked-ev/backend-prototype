@@ -1,13 +1,9 @@
-import { IsDate, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class DDIGDto {
   @IsNumber()
   @IsNotEmpty()
   sid: number;
-
-  @IsString()
-  @IsNotEmpty()
-  reqType: string;
 }
 
 export class ReceivedDataDto {
@@ -23,7 +19,7 @@ export class ReceivedDataDto {
   @IsNotEmpty()
   redReading: number;
 
-  @IsDate()
+  @IsString()
   @IsNotEmpty()
-  timeStamp: Date;
+  timeStamp: string;
 }

@@ -57,9 +57,9 @@ model Heart_Rate_Record {
   Rid      Int @id @default(autoincrement())
   ULRid     Int @unique
   ulrid UserListRecords @relation(fields: [ULRid], references: [ULRid])
-  beat      Int
-  redReading   Int
-  ir_Reading   Int
+  beat      Float
+  redReading   Float
+  ir_Reading   Float
   timeStamp DateTime @db.Timestamptz(3)
 }
 

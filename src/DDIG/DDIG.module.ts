@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { DdigService } from './ddig.service';
-import { DdigController } from './ddig.controller';
+import { DdigController } from './DDIG.controller';
 import { ConfigService } from '@nestjs/config';
 //import { prismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserService } from 'src/user/user.service';
 //import mqtt, { IClientOptions } from 'mqtt';
 // DDIG stand for Device Data Intgrety Guard
 @Module({
-  providers: [DdigService, ConfigService, PrismaService],
+  providers: [DdigService, ConfigService, PrismaService, UserService],
   controllers: [DdigController],
 })
 export class DDIGModule {}
