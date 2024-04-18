@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
 import { DDIGDto, ReceivedDataDto } from './dto/DDIG.dto';
-import * as argon from 'argon2';
+//import * as argon from 'argon2';
 import { ConfigService } from '@nestjs/config';
 import { connect, IClientOptions } from 'mqtt';
+
 import Bottleneck from 'bottleneck';
 @Injectable()
 export class DdigService {
@@ -50,11 +51,10 @@ export class DdigService {
   //   SDPR : Send Data Permissions Requests
   //   return '';
   // }
-
+  //const hashd = await argon.hash(data);
   async CreateTopic(sidDevice: number, ownerid: number) {
     const data: string = sidDevice.toString() + ownerid.toString();
-    const hashd = await argon.hash(data);
-    const Topic = 'deviceport/' + hashd;
+    const Topic = 'deviceport/' + data;
     console.log(Topic);
     return Topic;
   }
@@ -100,13 +100,13 @@ export class DdigService {
         } else {
           console.log('subscribed to Topic!');
         }
-        client.on('message', (message) => {
-          console.log(`Received message on topic ${message.toString()}`);
-          const data = this.ProcessMessage(message);
-          //this.SetMediandata(Databuffer, data);
-          this.ProcessTodb(data, devicerecord);
-        });
       });
+    });
+    client.on('message', (message) => {
+      console.log(`Received message on topic ${message.toString()}`);
+      const data = this.ProcessMessage(message);
+      //this.SetMediandata(Databuffer, data);
+      this.ProcessTodb(data, devicerecord);
     });
   }
   SetMediandata(Databuffer: Array<number>, data: object) {
