@@ -18,10 +18,14 @@ export class AuthService {
     try {
       const user = await this.prisma.users.create({
         data: {
+          phoneNum: dto.phoneNum,
           email: dto.email,
           firstName: dto.firstname,
           lastName: dto.lastname,
           BloodType: dto.BloodType,
+          birthdate: dto.DateOfBirth,
+          height: dto.height,
+          weight: dto.weight,
           hash,
         },
       });
