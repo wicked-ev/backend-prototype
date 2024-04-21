@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsEmail, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsEmail,
+  IsString,
+  IsNumber,
+  IsDate,
+  IsOptional,
+} from 'class-validator';
 
 export class AuthDto {
   @IsNotEmpty()
@@ -9,8 +16,12 @@ export class AuthDto {
   @IsString()
   lastname: string;
 
-  @IsEmail()
+  @IsNumber()
   @IsNotEmpty()
+  phoneNum: number;
+
+  @IsEmail()
+  @IsOptional()
   email: string;
 
   @IsNotEmpty()
@@ -20,6 +31,18 @@ export class AuthDto {
   @IsNotEmpty()
   @IsString()
   BloodType: string;
+
+  @IsDate()
+  @IsNotEmpty()
+  DateOfBirth: Date;
+
+  @IsNumber()
+  @IsNotEmpty()
+  weight: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  height: number;
 }
 
 export class AuthDto2 {
