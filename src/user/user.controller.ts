@@ -6,7 +6,7 @@ import { Users } from '@prisma/client';
 import { GetUser } from 'src/auth/decorators';
 import { jwtguard } from 'src/auth/guard';
 import { UserService } from './user.service';
-import { ActivateDeviceDto } from './dto';
+import { ActivateDeviceDto, RNPdto } from './dto';
 //@UseGuards(jwtguard)
 @Controller('user')
 export class UserController {
@@ -14,10 +14,15 @@ export class UserController {
   @Get('me')
   @UseGuards(jwtguard)
   getMe(@GetUser() user: Users) {
-    return this.userservice.GetAccount(user);
+    return this.userservice.Getme(user);
   }
   @Post('ActiviateDevice')
   ActiviateDecvice(@Body() dto: ActivateDeviceDto) {
     return this.userservice.ActiviteDevice(dto);
+  }
+
+  @Post('RegisterPatients')
+  RegisterNewPatients(@Body() dto: RNPdto) {
+    return this.userservice.RegisterNewPatients(dto);
   }
 }
