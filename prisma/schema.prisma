@@ -15,48 +15,67 @@ datasource db {
 
 model Users {
   id        Int      @id @default(autoincrement())
-  email String @unique
+  email String? @unique
+  phoneNum  BigInt @unique
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  birthdate DateTime? 
   firstName String
   lastName  String
   BloodType String
+  weight  Float?
+  height Float?
   hash String
-  Devices Device[]
+  Devices Device[] @relation("owne")
+  DevicesActivated Device[] @relation("active")
   Account accounts?
   @@map("Users")
 } 
+model Notes {
+  Nid Int @id @default(autoincrement())
+  createAt DateTime @default(now())
+  NoteAutherId Int?
+  Auther accounts? @relation(name: "AutherNote",fields: [NoteAutherId], references: [AccId])
+  PenitentId Int?
+  penitent accounts? @relation(name: "Note", fields: [PenitentId], references: [AccId])
+  NoteSub String
+  NoteMain String
+}
 
 model Device {
   Sid        Int @id @default(autoincrement())
   activateCode Int @unique
   createdAt DateTime @default(now())
   ownerID Int?
-  owner Users? @relation(fields: [ownerID], references: [id])
+  owner Users? @relation(name: "owne",fields: [ownerID], references: [id])
+  Activator Int?
+  activtor Users? @relation(name: "active", fields: [Activator], references: [id])
   userlist UserListRecords?
   @@map("Devices")
 }
 
 model accounts {
   AccId Int @id @default(autoincrement())
-  AccountOwner Int @unique
-  accountowner Users @relation(fields: [AccountOwner], references: [id])
+  AccountOwner Int? @unique
+  accountowner Users? @relation(fields: [AccountOwner], references: [id])
+  NotesA Notes[] @relation("AutherNote")
+  Notes Notes[] @relation("Note")
   userRecord UserListRecords[] 
   PreviewRequest PreviewerList[] @relation("Pre")
   sentPreviewRequest PreviewerList[] @relation("PreReq")
 }
 model PreviewerList {
   id Int @id @default(autoincrement())
-  PreviewedAccountId Int
-  previewed accounts @relation(name:"Pre",fields: [PreviewedAccountId], references: [AccId])
-  PreviewerAccountId Int
-  previewer accounts @relation(name:"PreReq",fields: [PreviewerAccountId], references: [AccId])
-  state String
+  PreviewedAccountId Int?
+  previewed accounts? @relation(name:"Pre",fields: [PreviewedAccountId], references: [AccId])
+  PreviewerAccountId Int?
+  previewer accounts? @relation(name:"PreReq",fields: [PreviewerAccountId], references: [AccId])
 }
 
 model Heart_Rate_Record {
   Rid      Int @id @default(autoincrement())
-  ULRid     Int @unique
-  ulrid UserListRecords @relation(fields: [ULRid], references: [ULRid])
+  ULRid     Int? @unique
+  ulrid UserListRecords? @relation(fields: [ULRid], references: [ULRid])
   beat      Float
   redReading   Float
   ir_Reading   Float
@@ -65,9 +84,9 @@ model Heart_Rate_Record {
 
 model UserListRecords {
   ULRid Int @id @default(autoincrement())
-  AutherDeviceid Int @unique //each Record is unique based on the auther
-  device Device @relation(fields: [AutherDeviceid], references: [Sid])
-  User Int //not unique user can have mulitple records with diffrenet autherDevices
-  user accounts @relation(fields: [User], references: [AccountOwner])
+  AutherDeviceid Int? @unique //each Record is unique based on the auther
+  device Device? @relation(fields: [AutherDeviceid], references: [Sid])
+  User Int? //not unique user can have mulitple records with diffrenet autherDevices
+  user accounts? @relation(fields: [User], references: [AccountOwner])
   HR_Record Heart_Rate_Record[]
 }
