@@ -5,11 +5,8 @@ import { DDIGDto, ReceivedDataDto } from './dto/DDIG.dto';
 //import * as argon from 'argon2';
 import { ConfigService } from '@nestjs/config';
 import { connect, IClientOptions } from 'mqtt';
-
-import Bottleneck from 'bottleneck';
 @Injectable()
 export class DdigService {
-  private messagesQueue: Bottleneck;
   private BrokerUrl: string;
   constructor(
     private prisma: PrismaService,
@@ -17,7 +14,6 @@ export class DdigService {
     private userservice: UserService,
   ) {
     this.BrokerUrl = this.config.get('BROKER_URL');
-    this.messagesQueue = new Bottleneck({ maxConcurrent: 1, reservoir: 50 });
   }
   async GetDevice(sid: number) {
     const device = await this.prisma.device.findUnique({
@@ -60,26 +56,34 @@ export class DdigService {
   }
 
   async CreateUserDeviceRecord(sid: number, ownerid: number) {
-    const devicerecord = await this.prisma.userListRecords.create({
-      data: {
-        AutherDeviceid: sid,
-        User: ownerid,
-      },
-    });
-    return devicerecord;
+    try {
+      const devicerecord = await this.prisma.userListRecords.create({
+        data: {
+          AutherDeviceid: sid,
+          User: ownerid,
+        },
+      });
+      return devicerecord;
+    } catch (err) {
+      throw new Error('Device sid or User id is not valid');
+    }
   }
 
   async getDeviceRecord(sid: number, ownerid: number) {
-    const devicerecord = await this.prisma.userListRecords.findUnique({
-      where: {
-        AutherDeviceid: sid,
-        User: ownerid,
-      },
-    });
-    if (!devicerecord) {
-      return false;
+    try {
+      const devicerecord = await this.prisma.userListRecords.findUnique({
+        where: {
+          AutherDeviceid: sid,
+          User: ownerid,
+        },
+      });
+      if (!devicerecord) {
+        return false;
+      }
+      return devicerecord;
+    } catch (err) {
+      throw new Error('Device id or User id is invalde');
     }
-    return devicerecord;
   }
   async connection(
     topic: string,
@@ -146,7 +150,9 @@ export class DdigService {
         },
       });
     } catch (err) {
+      //this is just error handling while testing it should be removed in production
       console.log(err);
+      throw new Error('cant not Process data to data');
     }
   }
   CreateMqttOption(DeviceOwnerID: number) {
