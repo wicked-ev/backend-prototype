@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+
 import { AuthDto } from 'src/auth/dto';
 export class ActivateDeviceDto {
   @IsNumber()
@@ -50,4 +51,10 @@ export class NoteDto {
   @IsString()
   @IsNotEmpty()
   NoteContent: string;
+}
+
+export class UpNoteDto extends NoteDto {
+  @IsNumber()
+  @IsNotEmpty()
+  NoteId: number;
 }
