@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ActivateDeviceDto, NoteDto, RNPdto } from './dto/index';
+import { ActivateDeviceDto, NoteDto, RNPdto, UpNoteDto } from './dto/index';
 import { error } from 'console';
 import { Users } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
@@ -12,14 +12,14 @@ export class UserService {
   ) {}
 
   async Getme(user: Users) {
-    const account = await this.GetAccount(user);
+    const account = await this.GetAccount(user.id);
     user['account'] = account;
     return user;
   }
-  async GetAccount(user: Users) {
+  async GetAccount(Userid: number) {
     const account = await this.prisma.accounts.findUnique({
       where: {
-        AccountOwner: user.id,
+        AccountOwner: Userid,
       },
     });
     if (account) {
@@ -80,12 +80,16 @@ export class UserService {
         const token = this.Authservice.signup(dto);
         if (typeof token === 'string') {
           this.AddPatientsToList(dto, dto.Userid);
+          const users = this.GetpatientLists(dto.Userid);
+          return users;
         }
       } catch (err) {
         throw new Error('Error creating new User');
       }
     } else {
       this.AddPatientsToList(patient, dto.Userid);
+      const user = this.GetpatientLists(dto.Userid);
+      return user;
     }
   }
 
@@ -141,9 +145,70 @@ export class UserService {
             NoteMain: dto.NoteContent,
           },
         });
+        return await this.GetNotesLists(dto.AutherID);
       } catch (err) {
-        throw new Error('Error while creating note');
+        throw new Error('Error creating note');
       }
+    }
+  }
+
+  async UpdateNote(dto: UpNoteDto) {
+    try {
+      await this.prisma.notes.update({
+        where: {
+          Nid: dto.NoteId,
+          NoteAutherId: dto.AutherID,
+          PenitentId: dto.PenitentId,
+        },
+        data: {
+          NoteSub: dto.NoteTitle,
+          NoteMain: dto.NoteContent,
+        },
+      });
+    } catch (err) {
+      throw new Error('error updating note');
+    }
+  }
+
+  async GetpatientLists(UserId: number) {
+    const AccUser = await this.GetAccount(UserId);
+    try {
+      const PatientList = await this.prisma.previewerList.findMany({
+        where: {
+          PreviewerAccountId: AccUser.AccId,
+        },
+      });
+      const List = [];
+      for (let index = 0; index < PatientList.length; index++) {
+        const Pid: number = PatientList[index].PreviewedAccountId;
+        const data = {
+          id: PatientList[index].id,
+          PreviewerAccountId: PatientList[index].PreviewerAccountId,
+          PreviewedAccountId: PatientList[index].PreviewedAccountId,
+        };
+        const user: any = await this.GetUser(Pid);
+        delete user.hash;
+        data['user'] = user;
+        List.push(data);
+      }
+      return List;
+    } catch (err) {}
+  }
+  async GetNotesLists(UserId: number) {
+    try {
+      const ListofNotes = await this.prisma.notes.findMany({
+        where: {
+          NoteAutherId: UserId,
+        },
+      });
+      if (!ListofNotes) {
+        throw new Error('empty');
+      } else {
+        return ListofNotes;
+      }
+    } catch (err) {
+      console.log(err);
+      throw new Error('error getting note list');
     }
   }
 }
