@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ActivateDeviceDto, NoteDto, RNPdto } from './dto/index';
+import { ActivateDeviceDto, NoteDto, RNPdto, UpNoteDto } from './dto/index';
 import { error } from 'console';
 import { Users } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
@@ -13,14 +13,14 @@ export class UserService {
   ) {}
 
   async Getme(user: Users) {
-    const account = await this.GetAccount(user);
+    const account = await this.GetAccount(user.id);
     user['account'] = account;
     return user;
   }
-  async GetAccount(user: Users) {
+  async GetAccount(Userid: number) {
     const account = await this.prisma.accounts.findUnique({
       where: {
-        AccountOwner: user.id,
+        AccountOwner: Userid,
       },
     });
     if (account) {
@@ -102,15 +102,13 @@ export class UserService {
       try {
         const token = await this.Authservice.signup(dto);
         if (typeof token === 'string') {
-          await this.AddPatientsToList(dto, dto.Userid);
-          return 'Patient registered successfully';
+          this.AddPatientsToList(dto, dto.Userid);
         }
       } catch (err) {
         throw new Error(`Error creating new User: ${err.message}`);
       }
     } else {
-      await this.AddPatientsToList(patient, dto.Userid);
-      return 'Patient already registered';
+      this.AddPatientsToList(patient, dto.Userid);
     }
   }
 
@@ -186,21 +184,10 @@ export class UserService {
             NoteMain: dto.NoteContent,
           },
         });
+        return await this.GetNotesLists(dto.AutherID);
       } catch (err) {
-        throw new Error(`Error while creating note: ${err.message}`);
+        throw new Error('Error while creating note');
       }
     }
-  }
-
-  async DoesPatientExist(patientId: number) {
-    const patient = await this.prisma.users.findUnique({
-      where: {
-        id: patientId,
-      },
-      select: {
-        id: true,
-      },
-    });
-    return !!patient;
   }
 }
