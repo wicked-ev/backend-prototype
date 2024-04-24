@@ -4,6 +4,7 @@ import { ActivateDeviceDto, NoteDto, RNPdto } from './dto/index';
 import { error } from 'console';
 import { Users } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
+import { validate } from 'class-validator';
 @Injectable()
 export class UserService {
   constructor(
@@ -30,62 +31,86 @@ export class UserService {
   }
 
   async ActiviteDevice(dto: ActivateDeviceDto) {
-    const DeviceStatus = await this.isDeviceOwned(dto.DeviceSID);
-    if (!DeviceStatus) {
-      const deviceupdate = await this.prisma.device.update({
-        where: {
-          Sid: dto.DeviceSID,
-        },
-        data: {
-          ownerID: dto.Userid,
-        },
-      });
-      return deviceupdate;
-    } else {
-      return 'Device Owned!';
+    try {
+      if (!dto) {
+        throw new Error('Invalid input: dto is null or undefined');
+      }
+      const isDeviceOwned = await this.isDeviceOwned(dto.DeviceSID);
+      if (!isDeviceOwned) {
+        const deviceupdate = await this.prisma.device.update({
+          where: {
+            Sid: dto.DeviceSID,
+          },
+          data: {
+            ownerID: dto.Userid,
+          },
+        });
+        if (deviceupdate) {
+          return {
+            status: 'success',
+            data: deviceupdate,
+          };
+        } else {
+          throw new Error('Failed to activate device');
+        }
+      } else {
+        return {
+          status: 'error',
+          message: 'Device Owned!',
+        };
+      }
+    } catch (error) {
+      console.error('Error in ActiviteDevice:', error);
+      throw new Error('Failed to activate device');
     }
   }
 
-  async isDeviceOwned(DeviceID: number) {
+  async isDeviceOwned(deviceId: number) {
     const device = await this.prisma.device.findUnique({
       where: {
-        Sid: DeviceID,
+        Sid: deviceId,
       },
     });
     if (!device) {
-      throw new error('Device Not Found');
-    } else if (device.ownerID) {
-      return true;
-    } else {
-      return false;
+      throw new Error('Device Not Found');
     }
+    return !!device.ownerID;
   }
 
-  async IsPatientsRegistered(dto: RNPdto) {
-    const patient = await this.prisma.users.findUnique({
-      where: {
-        phoneNum: dto.phoneNum,
-      },
-    });
-    if (!patient) {
-      return false;
-    } else {
-      return patient;
+  async isPatientRegistered(dto: RNPdto) {
+    if (!dto) {
+      throw new Error('Invalid input: dto is null or undefined');
+    }
+    try {
+      const patient = await this.prisma.users.findUnique({
+        where: {
+          phoneNum: dto.phoneNum,
+        },
+      });
+      if (patient === null || patient === undefined) {
+        return false;
+      } else {
+        return patient;
+      }
+    } catch (error) {
+      throw new Error('Error querying the database');
     }
   }
   async RegisterNewPatients(dto: RNPdto) {
-    const patient = await this.IsPatientsRegistered(dto);
+    const patient = await this.isPatientRegistered(dto);
     if (!patient) {
       try {
-        const token = this.Authservice.signup(dto);
+        const token = await this.Authservice.signup(dto);
         if (typeof token === 'string') {
-          this.AddPatientsToList(dto, dto.Userid);
+          await this.AddPatientsToList(dto, dto.Userid);
+          return 'Patient registered successfully';
         }
       } catch (err) {
-        throw new Error('Error creating new User');
+        throw new Error(`Error creating new User: ${err.message}`);
       }
     } else {
-      this.AddPatientsToList(patient, dto.Userid);
+      await this.AddPatientsToList(patient, dto.Userid);
+      return 'Patient already registered';
     }
   }
 
@@ -103,34 +128,54 @@ export class UserService {
     }
   }
   async IsPatientsInList(patient: any) {
-    const accpatient = await this.GetAccount(patient);
-    const patientslists = await this.prisma.previewerList.findFirst({
-      where: {
-        PreviewedAccountId: accpatient.AccId,
-      },
-    });
-    if (patientslists) {
-      return false;
-    } else {
-      return accpatient;
+    try {
+      const accpatient = await this.GetAccount(patient);
+      if (accpatient !== null && accpatient !== undefined) {
+        const count = await this.prisma.previewerList.count({
+          where: {
+            PreviewedAccountId: accpatient.AccId,
+          },
+        });
+        if (count > 0) {
+          throw new Error('Patient is already in the list');
+        } else {
+          return accpatient;
+        }
+      } else {
+        return null;
+      }
+    } catch (error) {
+      throw new Error('Error in IsPatientsInList: ' + error.message);
     }
   }
   async GetUser(id: number) {
+    if (typeof id !== 'number') {
+      throw new Error('Invalid input: id must be a number');
+    }
     try {
-      const user = this.prisma.users.findUnique({
+      const user = await this.prisma.users.findUnique({
         where: {
-          id: id,
+          id,
         },
       });
+      if (!user) {
+        throw new Error('User not found');
+      }
       return user;
-    } catch {
-      return false;
+    } catch (error) {
+      console.error('Error in GetUser:', error);
+      throw new Error(`Error retrieving user: ${error.message}`);
     }
   }
-  async CreatNewNote(dto: NoteDto) {
-    const patient = await this.GetUser(dto.PenitentId);
-    if (!patient) {
-      throw new Error('invalde patient ID');
+  async CreateNewNote(dto: NoteDto) {
+    const validationErrors = await validate(dto);
+    if (validationErrors.length > 0) {
+      throw new Error('Invalid input: NoteDto is not valid');
+    }
+
+    const patientExists = await this.DoesPatientExist(dto.PenitentId);
+    if (!patientExists) {
+      throw new Error('Invalid patient ID');
     } else {
       try {
         await this.prisma.notes.create({
@@ -142,8 +187,20 @@ export class UserService {
           },
         });
       } catch (err) {
-        throw new Error('Error while creating note');
+        throw new Error(`Error while creating note: ${err.message}`);
       }
     }
+  }
+
+  async DoesPatientExist(patientId: number) {
+    const patient = await this.prisma.users.findUnique({
+      where: {
+        id: patientId,
+      },
+      select: {
+        id: true,
+      },
+    });
+    return !!patient;
   }
 }
