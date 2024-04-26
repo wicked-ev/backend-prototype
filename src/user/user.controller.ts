@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Body } from '@nestjs/common';
+import { Controller, Post, UseGuards, Body, Put } from '@nestjs/common';
 import { Get } from '@nestjs/common';
 import { Users } from '@prisma/client';
 //import { AuthGuard } from '@nestjs/passport';
@@ -6,7 +6,7 @@ import { Users } from '@prisma/client';
 import { GetUser } from 'src/auth/decorators';
 import { jwtguard } from 'src/auth/guard';
 import { UserService } from './user.service';
-import { ActivateDeviceDto, RNPdto } from './dto';
+import { ActivateDeviceDto, RNPdto, NoteDto, UpNoteDto, UpPatient } from './dto';
 //@UseGuards(jwtguard)
 @Controller('user')
 export class UserController {
@@ -24,5 +24,28 @@ export class UserController {
   @Post('RegisterPatients')
   RegisterNewPatients(@Body() dto: RNPdto) {
     return this.userservice.RegisterNewPatients(dto);
+  }
+
+  @Get('GetPatientList')
+  GetPatientList(@Body() userId: number) {
+    return this.userservice.GetpatientLists(userId);
+  }
+
+  @Post('CreateNote')
+  CreatNewNote(@Body() dto: NoteDto) {
+    return this.userservice.CreateNewNote(dto);
+  }
+  @Get('GetNoteList')
+  GetNoteList(@Body() PatientId: number) {
+    return this.userservice.GetNotesLists(PatientId);
+  }
+  @Put('UpdateNote')
+  UpdateNote(@Body() dto: UpNoteDto) {
+    return this.userservice.UpdateNote(dto);
+  }
+
+  @Put('UpdatePatient')
+  UpdatePatient(@Body() dto: UpPatient) {
+    return this.userservice.Updatepatient(dto);
   }
 }
