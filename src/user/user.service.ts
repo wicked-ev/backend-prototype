@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ActivateDeviceDto, NoteDto, RNPdto, UpNoteDto } from './dto/index';
+import { ActivateDeviceDto, NoteDto, RNPdto } from './dto/index';
 import { error } from 'console';
 import { Users } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { validate } from 'class-validator';
+import { UpNoteDto } from './dto/user.dto';
 @Injectable()
 export class UserService {
   constructor(
@@ -102,13 +103,15 @@ export class UserService {
       try {
         const token = await this.Authservice.signup(dto);
         if (typeof token === 'string') {
-          this.AddPatientsToList(dto, dto.Userid);
+          await this.AddPatientsToList(dto, dto.Userid);
+          return 'Patient registered successfully';
         }
       } catch (err) {
         throw new Error(`Error creating new User: ${err.message}`);
       }
     } else {
-      this.AddPatientsToList(patient, dto.Userid);
+      await this.AddPatientsToList(patient, dto.Userid);
+      return 'Patient already registered';
     }
   }
 
@@ -184,10 +187,112 @@ export class UserService {
             NoteMain: dto.NoteContent,
           },
         });
-        return await this.GetNotesLists(dto.AutherID);
+        return await this.GetNotesLists(dto.PenitentId);
       } catch (err) {
-        throw new Error('Error while creating note');
+        throw new Error(`Error while creating note: ${err.message}`);
       }
+    }
+  }
+  async GetNotesLists(PatientId: number) {
+    if (
+      typeof PatientId !== 'number' ||
+      PatientId === null ||
+      PatientId === undefined
+    ) {
+      throw new Error('Invalid input: PenitentId must be a number');
+    }
+    try {
+      const listOfNotes = await this.prisma.notes.findMany({
+        where: {
+          PenitentId: PatientId,
+        },
+        select: {
+          Nid: true,
+          NoteSub: true,
+          NoteMain: true,
+        },
+      });
+      if (!listOfNotes) {
+        return [];
+      } else {
+        return listOfNotes;
+      }
+    } catch (err) {
+      throw new Error(`Failed to retrieve notes: ${err.message}`);
+    }
+  }
+  async DoesPatientExist(patientId: number) {
+    const patient = await this.prisma.users.findUnique({
+      where: {
+        id: patientId,
+      },
+      select: {
+        id: true,
+      },
+    });
+    return !!patient;
+  }
+
+  async GetpatientLists(userId: number) {
+    const AccUser = await this.GetAccount(userId);
+    try {
+      const patientList = await this.prisma.previewerList.findMany({
+        where: {
+          PreviewerAccountId: AccUser.AccId,
+        },
+      });
+      const List = [];
+      for (let index = 0; index < patientList.length; index++) {
+        const Pid: number = patientList[index].PreviewedAccountId;
+        const data = {
+          id: patientList[index].id,
+          PreviewerAccountId: patientList[index].PreviewerAccountId,
+          PreviewedAccountId: patientList[index].PreviewedAccountId,
+        };
+        const user: any = await this.GetUser(Pid);
+        delete user.hash;
+        data['user'] = user;
+        List.push(data);
+      }
+      return List;
+    } catch (err) {
+      console.error('Error in GetpatientLists:', err);
+      throw new Error(`Failed to get patient lists: ${err.message}`);
+    }
+  }
+
+  async Updatepatient(dto: UpPatient) {
+    
+  }
+
+  async UpdateNote(dto: UpNoteDto) {
+    const validationErrors = await validate(dto);
+    if (validationErrors.length > 0) {
+      throw new Error('Invalid input: UpNoteDto is not valid');
+    }
+    const note = await this.prisma.notes.findUnique({
+      where: {
+        Nid: dto.NoteId,
+        NoteAutherId: dto.AutherID,
+      },
+    });
+    if (!note) {
+      throw new Error(`Note not found`);
+    }
+    try {
+      const updatedNote = await this.prisma.notes.update({
+        where: {
+          Nid: dto.NoteId,
+          NoteAutherId: dto.AutherID,
+        },
+        data: {
+          NoteSub: dto.NoteTitle,
+          NoteMain: dto.NoteContent,
+        },
+      });
+      return updatedNote;
+    } catch (err) {
+      throw new Error(`Error updating note: ${err.message}`);
     }
   }
 }
