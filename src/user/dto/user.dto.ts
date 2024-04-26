@@ -4,8 +4,8 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  IsDate,
 } from 'class-validator';
-
 import { AuthDto } from 'src/auth/dto';
 export class ActivateDeviceDto {
   @IsNumber()
@@ -35,6 +35,43 @@ export class RNPdto extends AuthDto {
   Userid: number;
 }
 
+export class UpPatient {
+  @IsNumber()
+  @IsNotEmpty()
+  pid: number;
+
+  @IsEmail()
+  @IsOptional()
+  email: string;
+
+  @IsNumber()
+  @IsOptional()
+  phone: number;
+
+  @IsDate()
+  @IsOptional()
+  birthdate: Date;
+
+  @IsString()
+  @IsOptional()
+  firstname: string;
+
+  @IsString()
+  @IsOptional()
+  lastname: string;
+
+  @IsString()
+  @IsOptional()
+  BloodType: string;
+
+  @IsNumber()
+  @IsOptional()
+  weight: number;
+
+  @IsNumber()
+  @IsOptional()
+  height: number;
+}
 export class NoteDto {
   @IsNumber()
   @IsNotEmpty()
