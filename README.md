@@ -1,16 +1,25 @@
 to use this bakend application follow the new steps below:
 1- clone this repository in your machine.
+
 2- don't forget to install the needed dependencies and packages 'npm i'
+
 3- set up PostgreSQL on your machine you can install it from this link: https://www.enterprisedb.com/downloads/postgres-postgresql-downloads 
 chose the one for your operating system and click on the small blue box with an arrow down to download
-4- once downloaded open the intaller and install PostgreSQL on your machine (note while installing it will ask you to set password make to remember it or to write it down cause you will need it).
+4- once downloaded open the intaller and install PostgreSQL on your machine (note while installing it will ask you to set password make to remember it or to write it down cause you 
+will need it).
+
 5- afer PostgreSQL installation it will ask you to install stack builder just close and exist you don't need that
+
 6- go search for SQL SHELL (psql) on your machine using the windows search
+
 7- command line program will show up click on it
+
 8- all you have to do is click enter on everything except when it asks for password you have to type the password you entered while installing postgresql.
+
 9- after it will let use the commmand line interface for postgresql all you need to do now is just to create database you can do that using this command "CREATE DATABASE dataname" 
 note you can alse use the following command to see all databases on your machine "\l"
 when you make sure the database is created make sure to remember the name of the database cause you will need it
+
 10-open your the project file in your code editor and go to the .env file and change the database url based on your database name and password for postgresql and the port postgresql is running on by default it is  5432
 DATABASE_URL="postgresql://postgres:PASSWORDHERE@localhost:5432/DATABASENAME?schema=public"
 
