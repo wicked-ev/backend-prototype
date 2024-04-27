@@ -40,13 +40,17 @@ export class UpPatient {
   @IsNotEmpty()
   pid: number;
 
+  @IsDate()
+  @IsNotEmpty()
+  updatedAt: Date;
+
   @IsEmail()
   @IsOptional()
   email: string;
 
   @IsNumber()
   @IsOptional()
-  phone: number;
+  phone: bigint;
 
   @IsDate()
   @IsOptional()
@@ -94,4 +98,38 @@ export class UpNoteDto extends NoteDto {
   @IsNumber()
   @IsNotEmpty()
   NoteId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  AutherID: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  PenitentId: number;
+
+  @IsString()
+  @IsOptional()
+  NoteTitle: string;
+
+  @IsString()
+  @IsOptional()
+  NoteContent: string;
+
+  @IsDate()
+  @IsNotEmpty()
+  UpdatedAt: Date;
+}
+
+export class UpdateDevice {
+  @IsNumber()
+  @IsNotEmpty()
+  DeviceSID: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  ActivatorId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  NeWOwner: number;
 }
