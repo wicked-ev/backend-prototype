@@ -26,7 +26,7 @@ model Users {
   weight  Float?
   height Float?
   hash String
-  Devices Device[] @relation("owne")
+  Devices Device[] @relation("owned")
   DevicesActivated Device[] @relation("active")
   Account accounts?
   @@map("Users")
@@ -34,6 +34,7 @@ model Users {
 model Notes {
   Nid Int @id @default(autoincrement())
   createAt DateTime @default(now())
+  updateAt DateTime @default(now())
   NoteAutherId Int?
   Auther accounts? @relation(name: "AutherNote",fields: [NoteAutherId], references: [AccId])
   PenitentId Int?
@@ -47,7 +48,7 @@ model Device {
   activateCode Int @unique
   createdAt DateTime @default(now())
   ownerID Int?
-  owner Users? @relation(name: "owne",fields: [ownerID], references: [id])
+  owner Users? @relation(name: "owned",fields: [ownerID], references: [id])
   Activator Int?
   activtor Users? @relation(name: "active", fields: [Activator], references: [id])
   userlist UserListRecords?
