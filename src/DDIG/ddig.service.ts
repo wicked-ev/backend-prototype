@@ -152,7 +152,7 @@ export class DdigService {
     } catch (err) {
       //this is just error handling while testing it should be removed in production
       console.log(err);
-      throw new Error('cant not Process data to data');
+      throw new Error('cant not Process data to database');
     }
   }
   CreateMqttOption(DeviceOwnerID: number) {
