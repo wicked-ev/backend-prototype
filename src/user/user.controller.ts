@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Body, Put } from '@nestjs/common';
+import { Controller, Post, UseGuards, Body, Put, Delete } from '@nestjs/common';
 import { Get } from '@nestjs/common';
 import { Users } from '@prisma/client';
 //import { AuthGuard } from '@nestjs/passport';
@@ -6,7 +6,14 @@ import { Users } from '@prisma/client';
 import { GetUser } from 'src/auth/decorators';
 import { jwtguard } from 'src/auth/guard';
 import { UserService } from './user.service';
-import { ActivateDeviceDto, RNPdto, NoteDto, UpNoteDto, UpPatient } from './dto';
+import { UpdateDevice } from './dto/user.dto';
+import {
+  ActivateDeviceDto,
+  RNPdto,
+  NoteDto,
+  UpNoteDto,
+  UpPatient,
+} from './dto';
 //@UseGuards(jwtguard)
 @Controller('user')
 export class UserController {
@@ -40,12 +47,31 @@ export class UserController {
     return this.userservice.GetNotesLists(PatientId);
   }
   @Put('UpdateNote')
-  UpdateNote(@Body() dto: UpNoteDto) {
+  UpdateNote(@Body() dto: Partial<UpNoteDto>) {
     return this.userservice.UpdateNote(dto);
   }
 
   @Put('UpdatePatient')
-  UpdatePatient(@Body() dto: UpPatient) {
+  UpdatePatient(@Body() dto: Partial<UpPatient>) {
     return this.userservice.Updatepatient(dto);
+  }
+
+  @Put('UpdateDevice')
+  UpdateDevice(@Body() dto: UpdateDevice) {
+    return this.userservice.UpdateDevice(dto);
+  }
+  @Delete('DeleteNote')
+  DeleteNote(@Body() NoteId: number) {
+    return this.userservice.DeleteNote(NoteId);
+  }
+
+  @Delete('DeleteDevice')
+  DeleteDevice(@Body() DeviceId: number) {
+    return this.userservice.DeleteDevice(DeviceId);
+  }
+
+  @Delete('DeletePatientFromList')
+  DeletePatientFromList(@Body() PatientId: number, UserId: number) {
+    return this.userservice.DeletePatientFromList(PatientId, UserId);
   }
 }
