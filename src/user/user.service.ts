@@ -5,7 +5,8 @@ import { error } from 'console';
 import { Users } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { validate } from 'class-validator';
-import { UpNoteDto } from './dto/user.dto';
+import { UpdateDevice, UpNoteDto, UpPatient } from './dto/user.dto';
+
 @Injectable()
 export class UserService {
   constructor(
@@ -174,7 +175,7 @@ export class UserService {
       throw new Error('Invalid input: NoteDto is not valid');
     }
 
-    const patientExists = await this.DoesPatientExist(dto.PenitentId);
+    const patientExists = await this.DoesUserExist(dto.PenitentId);
     if (!patientExists) {
       throw new Error('Invalid patient ID');
     } else {
@@ -221,8 +222,8 @@ export class UserService {
       throw new Error(`Failed to retrieve notes: ${err.message}`);
     }
   }
-  async DoesPatientExist(patientId: number) {
-    const patient = await this.prisma.users.findUnique({
+  async DoesUserExist(patientId: number) {
+    const User = await this.prisma.users.findUnique({
       where: {
         id: patientId,
       },
@@ -230,7 +231,7 @@ export class UserService {
         id: true,
       },
     });
-    return !!patient;
+    return !!User;
   }
 
   async GetpatientLists(userId: number) {
@@ -261,21 +262,111 @@ export class UserService {
     }
   }
 
-  async Updatepatient(dto: UpPatient) {
-    
+  removeUndefinedOrNull<T extends object>(obj: T): Partial<T> {
+    const newObj: Partial<T> = {};
+
+    for (const key in obj) {
+      if (
+        obj.hasOwnProperty(key) &&
+        obj[key] !== undefined &&
+        obj[key] !== null
+      ) {
+        newObj[key] = obj[key];
+      }
+    }
+
+    return newObj;
+  }
+  async Updatepatient(dto: Partial<UpPatient>) {
+    let dataraw: Users;
+    dataraw.id = dto.pid;
+    dataraw.phoneNum = dto.phone;
+    dataraw.email = dto.email;
+    dataraw.lastName = dto.lastname;
+    dataraw.firstName = dto.firstname;
+    dataraw.weight = dto.weight;
+    dataraw.height = dto.height;
+    dataraw.BloodType = dto.BloodType;
+    dataraw.birthdate = dto.birthdate;
+    const data = this.removeUndefinedOrNull(dataraw);
+    const patientexist: boolean = await this.DoesUserExist(dto.pid);
+    if (!patientexist) {
+      throw new Error('Patient not Found');
+    }
+    try {
+      const updatedPatient = await this.prisma.users.update({
+        where: {
+          id: dto.pid,
+        },
+        data,
+      });
+      return updatedPatient;
+    } catch (err) {
+      throw new Error(`Error updating Patient: ${err.message}`);
+    }
+  }
+  async doesNotexist(NoteId: number): Promise<boolean> {
+    const note = await this.prisma.notes.findUnique({
+      where: {
+        Nid: NoteId,
+      },
+    });
+    return !!note;
+  }
+  async DoseDeviceExist(DeivceId: number): Promise<boolean> {
+    const device = await this.prisma.device.findUnique({
+      where: {
+        Sid: DeivceId,
+      },
+    });
+    return !!device;
+  }
+  async UpdateDevice(dto: UpdateDevice) {
+    try {
+      const device = await this.DoseDeviceExist(dto.DeviceSID);
+      if (!device) {
+        throw new Error('Device not found');
+      }
+      const activator = await this.DoesUserExist(dto.ActivatorId);
+      const patient = await this.DoesUserExist(dto.NeWOwner);
+      if (!patient) {
+        throw new Error('Patient not found');
+      }
+      if (!activator) {
+        throw new Error('Activator not found');
+      }
+      if (patient && activator && device) {
+        const updatedDevice = await this.prisma.device.update({
+          where: {
+            Sid: dto.DeviceSID,
+          },
+          data: {
+            Activator: dto.ActivatorId,
+            ownerID: dto.NeWOwner,
+          },
+        });
+        return updatedDevice;
+      }
+    } catch (err) {
+      throw new Error(`Error updating note: ${err.message}`);
+    }
   }
 
-  async UpdateNote(dto: UpNoteDto) {
+  async UpdateNote(dto: Partial<UpNoteDto>) {
+    const dataraw = {
+      Nid: dto.NoteId,
+      NoteAutherId: dto.AutherID,
+      PenitentId: dto.PenitentId,
+      NoteSub: dto.NoteTitle,
+      NoteMain: dto.NoteContent,
+      updateAt: dto.UpdatedAt,
+    };
+    const data = this.removeUndefinedOrNull(dataraw);
     const validationErrors = await validate(dto);
     if (validationErrors.length > 0) {
       throw new Error('Invalid input: UpNoteDto is not valid');
     }
-    const note = await this.prisma.notes.findUnique({
-      where: {
-        Nid: dto.NoteId,
-        NoteAutherId: dto.AutherID,
-      },
-    });
+    const note = await this.doesNotexist(dto.NoteId);
     if (!note) {
       throw new Error(`Note not found`);
     }
@@ -285,14 +376,106 @@ export class UserService {
           Nid: dto.NoteId,
           NoteAutherId: dto.AutherID,
         },
-        data: {
-          NoteSub: dto.NoteTitle,
-          NoteMain: dto.NoteContent,
-        },
+        data,
       });
       return updatedNote;
     } catch (err) {
       throw new Error(`Error updating note: ${err.message}`);
+    }
+  }
+
+  async DeleteDevice(DeviceId: number) {
+    try {
+      const device = await this.DoseDeviceExist(DeviceId);
+      if (!device) {
+        throw new Error('Device not found');
+      }
+      await this.prisma.device.delete({
+        where: {
+          Sid: DeviceId,
+        },
+      });
+      return { message: 'Device deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting Device:', error);
+      return { message: 'An error occurred while deleting the Device' };
+    }
+  }
+  async DeleteNote(NoteId: number) {
+    try {
+      const note = await this.doesNotexist(NoteId);
+      if (!note) {
+        throw new Error(`Note not found`);
+      }
+      await this.prisma.notes.delete({
+        where: {
+          Nid: NoteId,
+        },
+      });
+      return { message: 'User deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return { message: 'An error occurred while deleting the user' };
+    }
+  }
+  async DeleteUser(UserId: number) {
+    try {
+      const patient = await this.DoesUserExist(UserId);
+      if (!patient) {
+        throw new Error(`patient not found`);
+      }
+      await this.prisma.users.delete({
+        where: {
+          id: UserId,
+        },
+      });
+      return { message: 'User deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return { message: 'An error occurred while deleting the user' };
+    }
+  }
+
+  async DeletePatientFromList(PatientId: number, UserId: number) {
+    try {
+      const patient = await this.DoesUserExist(PatientId);
+      const user = await this.DoesUserExist(UserId);
+      if (!user) {
+        throw new Error(`User not found`);
+      }
+      if (!patient) {
+        throw new Error(`patient not found`);
+      }
+      let userAccId, patientAccId;
+      if (user && patient) {
+        userAccId = await this.GetAccount(UserId);
+        patientAccId = await this.GetAccount(PatientId);
+        if (!userAccId) {
+          throw new Error(`User Account not found`);
+        }
+        if (!patientAccId) {
+          throw new Error(`Patient Account not found`);
+        }
+      }
+      const list = await this.prisma.previewerList.findFirst({
+        where: {
+          PreviewerAccountId: userAccId,
+        },
+      });
+      if (!list) {
+        throw new Error(`List not found or empty`);
+      }
+      await this.prisma.previewerList.delete({
+        where: {
+          id: list.id,
+          PreviewedAccountId: PatientId,
+          PreviewerAccountId: UserId,
+        },
+      });
+      return { message: 'User deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return { message: 'An error occurred while deleting the user' };
     }
   }
 }
