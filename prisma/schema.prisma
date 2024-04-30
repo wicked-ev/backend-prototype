@@ -26,6 +26,7 @@ model Users {
   weight  Float?
   height Float?
   hash String
+  Role String
   Devices Device[] @relation("owned")
   DevicesActivated Device[] @relation("active")
   Account accounts?
