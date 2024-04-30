@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
 import { DDIGDto, ReceivedDataDto } from './dto/DDIG.dto';
-//import * as argon from 'argon2';
 import { ConfigService } from '@nestjs/config';
 import { connect, IClientOptions } from 'mqtt';
 @Injectable()
@@ -43,11 +42,6 @@ export class DdigService {
     return { Topic: topic, permissions: true };
   }
 
-  // async DDIG(dto: DDIGDto) {
-  //   SDPR : Send Data Permissions Requests
-  //   return '';
-  // }
-  //const hashd = await argon.hash(data);
   async CreateTopic(sidDevice: number, ownerid: number) {
     const data: string = sidDevice.toString() + ownerid.toString();
     const Topic = 'deviceport/' + data;
@@ -91,7 +85,6 @@ export class DdigService {
     deviceID: number,
     devicerecord: any,
   ) {
-    //let msgCounter: number = 0;
     const client = connect(
       this.BrokerUrl,
       this.CreateMqttOption(deviceOwnerID),
@@ -109,7 +102,6 @@ export class DdigService {
     client.on('message', (message) => {
       console.log(`Received message on topic ${message.toString()}`);
       const data = this.ProcessMessage(message);
-      //this.SetMediandata(Databuffer, data);
       this.ProcessTodb(data, devicerecord);
     });
   }
@@ -122,13 +114,11 @@ export class DdigService {
     data['ir_Reading'] = Databuffer[2];
     Databuffer = [0, 0, 0];
   }
-  ProcessMessage(message: string, DeviceID?: number, OwnerID?: number) {
+  ProcessMessage(message: string) {
     const values = message.split(',');
 
     if (values.length == 4) {
       const obj = {
-        OwnerID: OwnerID,
-        AutherDevice: DeviceID,
         ir_Reading: parseInt(values[0]),
         redReading: parseInt(values[1]),
         beat: parseInt(values[2]),
