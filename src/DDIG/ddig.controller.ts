@@ -11,6 +11,7 @@ export class DdigController {
   // }
   @Post('SDPR')
   SDPR(@Body() dto: DDIGDto) {
+    console.log("received a msg from a device")
     return this.ddig.SDPR(dto);
   }
 }

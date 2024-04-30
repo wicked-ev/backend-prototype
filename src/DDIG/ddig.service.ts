@@ -25,9 +25,9 @@ export class DdigService {
     }
     return device;
   }
+
   async SDPR(dto: DDIGDto) {
     const device = await this.GetDevice(dto.sid);
-
     if (!device) {
       throw new Error('Device not found');
     } else if (!device.ownerID) {
@@ -79,6 +79,7 @@ export class DdigService {
       throw new Error('Device id or User id is invalde');
     }
   }
+
   async connection(
     topic: string,
     deviceOwnerID: number,
@@ -87,7 +88,7 @@ export class DdigService {
   ) {
     const client = connect(
       this.BrokerUrl,
-      this.CreateMqttOption(deviceOwnerID),
+      // this.CreateMqttOption(deviceOwnerID),
     );
     client.on('connect', () => {
       console.log('connect to broker');
@@ -95,14 +96,15 @@ export class DdigService {
         if (err) {
           console.error('error subscribing to topic:', err);
         } else {
-          console.log('subscribed to Topic!');
+          console.log(`subscribed to Topic! ${topic}`);
         }
       });
     });
-    client.on('message', (message) => {
+    client.on('message', (topic, message) => {
       console.log(`Received message on topic ${message.toString()}`);
-      const data = this.ProcessMessage(message);
-      this.ProcessTodb(data, devicerecord);
+      const data = this.ProcessMessage(message.toString());
+      //this.SetMediandata(Databuffer, data);
+      // this.ProcessTodb(data, devicerecord);
     });
   }
   SetMediandata(Databuffer: Array<number>, data: object) {
@@ -116,7 +118,6 @@ export class DdigService {
   }
   ProcessMessage(message: string) {
     const values = message.split(',');
-
     if (values.length == 4) {
       const obj = {
         ir_Reading: parseInt(values[0]),
@@ -124,6 +125,7 @@ export class DdigService {
         beat: parseInt(values[2]),
         timeStamp: values[3],
       };
+      console.log(obj);
       return obj;
     }
   }
