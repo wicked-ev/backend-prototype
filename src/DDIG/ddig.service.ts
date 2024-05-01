@@ -111,7 +111,7 @@ export class DdigService {
       console.log(`Received message on topic ${message.toString()}`);
       const data = this.ProcessMessage(message.toString());
       //this.SetMediandata(Databuffer, data);
-      // this.ProcessTodb(data, devicerecord);
+      this.ProcessTodb(data, devicerecord);
     });
   }
   SetMediandata(Databuffer: Array<number>, data: object) {
