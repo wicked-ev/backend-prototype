@@ -6,7 +6,7 @@ import {
   IsString,
   IsDate,
 } from 'class-validator';
-import { AuthDto } from 'src/auth/dto';
+import { AuthDto } from '../../auth/dto';
 export class ActivateDeviceDto {
   @IsNumber()
   @IsNotEmpty()
