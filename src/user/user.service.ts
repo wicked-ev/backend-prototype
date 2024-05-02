@@ -161,7 +161,7 @@ export class UserService {
     const patient = await this.isPatientRegistered(dto);
     if (!patient) {
       try {
-        const token = await this.Authservice.signup(dto);
+        const token = await this.Authservice.signup(dto, Roles.Patient);
         if (typeof token !== null) {
           const patient = await this.isPatientRegistered(dto);
           if (patient) {
