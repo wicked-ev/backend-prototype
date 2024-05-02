@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { UserService } from 'src/user/user.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { UserService } from '../user/user.service';
 import { DDIGDto, ReceivedDataDto } from './dto/DDIG.dto';
 import { ConfigService } from '@nestjs/config';
 import { connect, IClientOptions } from 'mqtt';

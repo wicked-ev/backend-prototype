@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DdigService } from './ddig.service';
-import { DdigController } from './DDIG.controller';
+import { DdigController } from './ddig.controller';
 import { ConfigService } from '@nestjs/config';
 //import { prismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'src/prisma/prisma.service';
