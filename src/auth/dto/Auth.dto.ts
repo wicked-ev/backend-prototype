@@ -7,6 +7,15 @@ import {
   IsOptional,
 } from 'class-validator';
 
+export class validateRole {
+  @IsOptional()
+  @IsNumber()
+  PatientId: number;
+
+  @IsOptional()
+  @IsNumber()
+  DoctorId: number;
+}
 export class AuthDto {
   @IsNotEmpty()
   @IsString()
@@ -16,9 +25,9 @@ export class AuthDto {
   @IsString()
   lastname: string;
 
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
-  phoneNum: number;
+  phoneNum: string;
 
   @IsEmail()
   @IsOptional()
@@ -28,7 +37,7 @@ export class AuthDto {
   @IsString()
   password: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   BloodType: string;
 
@@ -37,18 +46,26 @@ export class AuthDto {
   DateOfBirth: Date;
 
   @IsNumber()
-  @IsNotEmpty()
+  @IsOptional()
   weight: number;
 
   @IsNumber()
-  @IsNotEmpty()
+  @IsOptional()
   height: number;
+
+  @IsNumber()
+  @IsOptional()
+  MinRate: number;
+
+  @IsNumber()
+  @IsOptional()
+  MaxRate: number;
 }
 
 export class AuthDto2 {
-  @IsEmail()
+  @IsString()
   @IsNotEmpty()
-  email: string;
+  phonenum: string;
 
   @IsNotEmpty()
   @IsString()
