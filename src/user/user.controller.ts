@@ -7,6 +7,7 @@ import { GetUser } from 'src/auth/decorators';
 import { jwtguard } from 'src/auth/guard';
 import { UserService } from './user.service';
 import { UpdateDevice } from './dto/user.dto';
+import { AuthService } from '../auth/auth.service';
 import {
   ActivateDeviceDto,
   RNPdto,
@@ -17,61 +18,78 @@ import {
 //@UseGuards(jwtguard)
 @Controller('user')
 export class UserController {
-  constructor(private userservice: UserService) {}
+  constructor(
+    private userservice: UserService,
+    private authService: AuthService,
+  ) {}
   @Get('me')
   @UseGuards(jwtguard)
   getMe(@GetUser() user: Users) {
     return this.userservice.Getme(user);
   }
-  @Post('ActiviateDevice')
-  ActiviateDecvice(@Body() dto: ActivateDeviceDto) {
-    return this.userservice.ActiviteDevice(dto);
+
+  //devices
+  @Post('/devices')
+  async ActivateDecvice(@Body() dto: ActivateDeviceDto) {
+    await this.authService.validateRole(dto.ActivatorId, dto.Userid);
+    return await this.userservice.ActivateDevice(dto);
   }
 
-  @Post('RegisterPatients')
-  RegisterNewPatients(@Body() dto: RNPdto) {
-    return this.userservice.RegisterNewPatients(dto);
+  @Put('/devices/:id')
+  async updateDevice(@Body() dto: UpdateDevice) {
+    await this.authService.validateRole(dto.ActivatorId, dto.NeWOwner);
+    return await this.userservice.UpdateDevice(dto);
   }
 
-  @Get('GetPatientList')
-  GetPatientList(@Body() userId: number) {
-    return this.userservice.GetpatientLists(userId);
+  @Delete('/devices/:id')
+  async DeleteDevice(@Body() DeviceId: number) {
+    return await this.userservice.DeleteDevice(DeviceId);
   }
 
-  @Post('CreateNote')
-  CreatNewNote(@Body() dto: NoteDto) {
-    return this.userservice.CreateNewNote(dto);
+  //patients
+  @Post('/patients')
+  async createPatient(@Body() dto: RNPdto) {
+    await this.authService.validateRole(dto.Userid);
+    return await this.userservice.RegisterNewPatients(dto);
   }
-  @Get('GetNoteList')
-  GetNoteList(@Body() PatientId: number) {
-    return this.userservice.GetNotesLists(PatientId);
+
+  @Get('/patients')
+  async getPatientList(@Body() userId: number) {
+    await this.authService.validateRole(userId);
+    return await this.userservice.GetpatientLists(userId);
   }
-  @Put('UpdateNote')
-  UpdateNote(@Body() dto: Partial<UpNoteDto>) {
+
+  @Put('/patients/:id')
+  async updatePatient(@Body() dto: Partial<UpPatient>) {
+    await this.authService.validateRole(null, dto.id);
+    return await this.userservice.Updatepatient(dto);
+  }
+
+  @Delete('/patients/:id')
+  async deletePatientFromList(@Body() PatientId: number, UserId: number) {
+    await this.authService.validateRole(UserId, PatientId);
+    return await this.userservice.DeletePatientFromList(PatientId, UserId);
+  }
+
+  //notes
+  @Post('/patients/:patientId/notes')
+  async creatNewNote(@Body() dto: NoteDto) {
+    await this.authService.validateRole(dto.AuthorID, dto.PatientId);
+    return await this.userservice.CreateNewNote(dto);
+  }
+  @Get('/patients/:patientId/notes')
+  async getNoteList(@Body() PatientId: number) {
+    await this.authService.validateRole(null, PatientId);
+    return await this.userservice.GetNotesLists(PatientId);
+  }
+  @Put('/notes/:id')
+  async updateNote(@Body() dto: Partial<UpNoteDto>) {
+    await this.authService.validateRole(dto.AuthorId, dto.PatientId);
     return this.userservice.UpdateNote(dto);
   }
 
-  @Put('UpdatePatient')
-  UpdatePatient(@Body() dto: Partial<UpPatient>) {
-    return this.userservice.Updatepatient(dto);
-  }
-
-  @Put('UpdateDevice')
-  UpdateDevice(@Body() dto: UpdateDevice) {
-    return this.userservice.UpdateDevice(dto);
-  }
-  @Delete('DeleteNote')
+  @Delete('/notes/:id')
   DeleteNote(@Body() NoteId: number) {
     return this.userservice.DeleteNote(NoteId);
-  }
-
-  @Delete('DeleteDevice')
-  DeleteDevice(@Body() DeviceId: number) {
-    return this.userservice.DeleteDevice(DeviceId);
-  }
-
-  @Delete('DeletePatientFromList')
-  DeletePatientFromList(@Body() PatientId: number, UserId: number) {
-    return this.userservice.DeletePatientFromList(PatientId, UserId);
   }
 }
