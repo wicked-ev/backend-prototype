@@ -18,15 +18,11 @@ export class ActivateDeviceDto {
 
   @IsNumber()
   @IsNotEmpty()
-  PhoneNum: number;
-
-  @IsEmail()
-  @IsOptional()
-  email: string;
+  Userid: number;
 
   @IsNumber()
   @IsNotEmpty()
-  Userid: number;
+  ActivatorId: number;
 }
 
 export class RNPdto extends AuthDto {
@@ -38,7 +34,7 @@ export class RNPdto extends AuthDto {
 export class UpPatient {
   @IsNumber()
   @IsNotEmpty()
-  pid: number;
+  id: number;
 
   @IsDate()
   @IsNotEmpty()
@@ -48,9 +44,9 @@ export class UpPatient {
   @IsOptional()
   email: string;
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
-  phone: bigint;
+  phoneNum: string;
 
   @IsDate()
   @IsOptional()
@@ -79,11 +75,11 @@ export class UpPatient {
 export class NoteDto {
   @IsNumber()
   @IsNotEmpty()
-  AutherID: number;
+  AuthorID: number;
 
   @IsNumber()
   @IsNotEmpty()
-  PenitentId: number;
+  PatientId: number;
 
   @IsString()
   @IsNotEmpty()
@@ -94,18 +90,18 @@ export class NoteDto {
   NoteContent: string;
 }
 
-export class UpNoteDto extends NoteDto {
+export class UpNoteDto {
   @IsNumber()
   @IsNotEmpty()
   NoteId: number;
 
   @IsNumber()
   @IsNotEmpty()
-  AutherID: number;
+  AuthorId: number;
 
   @IsNumber()
   @IsNotEmpty()
-  PenitentId: number;
+  PatientId: number;
 
   @IsString()
   @IsOptional()
@@ -114,10 +110,6 @@ export class UpNoteDto extends NoteDto {
   @IsString()
   @IsOptional()
   NoteContent: string;
-
-  @IsDate()
-  @IsNotEmpty()
-  UpdatedAt: Date;
 }
 
 export class UpdateDevice {
