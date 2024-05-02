@@ -15,16 +15,18 @@ datasource db {
 
 model Users {
   id        Int      @id @default(autoincrement())
-  email String? @unique
-  phoneNum  BigInt @unique
+  email String? 
+  phoneNum  String @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   birthdate DateTime? 
   firstName String
   lastName  String
-  BloodType String
+  BloodType String?
   weight  Float?
   height Float?
+  MinRate Int? // add this new attribute to update patient dto
+  MaxRate Int?
   hash String
   Role String
   Devices Device[] @relation("owned")
@@ -38,8 +40,8 @@ model Notes {
   updateAt DateTime @updatedAt
   NoteAutherId Int?
   Auther accounts? @relation(name: "AutherNote",fields: [NoteAutherId], references: [AccId])
-  PenitentId Int?
-  penitent accounts? @relation(name: "Note", fields: [PenitentId], references: [AccId])
+  PatientId Int?
+  patient accounts? @relation(name: "Note", fields: [PatientId], references: [AccId])
   NoteSub String
   NoteMain String
 }
@@ -49,7 +51,7 @@ model Device {
   activateCode Int @unique
   createdAt DateTime @default(now())
   updateAt DateTime @updatedAt
-  ownerID Int?
+  ownerID Int? @unique
   owner Users? @relation(name: "owned",fields: [ownerID], references: [id])
   Activator Int?
   activtor Users? @relation(name: "active", fields: [Activator], references: [id])
@@ -66,6 +68,9 @@ model accounts {
   userRecord UserListRecords[] 
   PreviewRequest PreviewerList[] @relation("Pre")
   sentPreviewRequest PreviewerList[] @relation("PreReq")
+  appointment Appointment[] @relation("petients")
+  DocAppointmentDocs Appointment[] @relation("doctor")
+  Notifications Notification[]
 }
 model PreviewerList {
   id Int @id @default(autoincrement())
@@ -76,6 +81,24 @@ model PreviewerList {
   previewer accounts? @relation(name:"PreReq",fields: [PreviewerAccountId], references: [AccId])
 }
 
+model Notification {
+  Notid Int @id @default(autoincrement())
+  UserAccid Int?
+  notifDate DateTime @default(now())
+  useracc accounts? @relation(fields: [UserAccid], references: [AccId])
+  Petients String
+  context String 
+}
+
+model Appointment {
+  Aid Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  AppointmentDate DateTime @default(now())
+  patientsId Int?
+  patients accounts? @relation(name:"petients",fields: [patientsId], references: [AccId])
+  DoctorId Int?
+  Doctor accounts? @relation(name:"doctor",fields: [DoctorId], references: [AccId])
+}
 model Heart_Rate_Record {
   Rid      Int @id @default(autoincrement())
   ULRid     Int? @unique
