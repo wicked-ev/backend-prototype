@@ -65,18 +65,23 @@ export class DdigService {
 
   async getDeviceRecord(sid: number, ownerid: number) {
     try {
+      const isDevice = await this.userservice.DoseDeviceExist(sid);
+      const isUser = await this.userservice.DoesUserExist(ownerid);
+      if (!isDevice) {
+        throw new Error('Device not found');
+      }
+      if (!isUser) {
+        throw new Error('User not found');
+      }
       const devicerecord = await this.prisma.userListRecords.findUnique({
         where: {
           AutherDeviceid: sid,
           User: ownerid,
         },
       });
-      if (!devicerecord) {
-        return false;
-      }
       return devicerecord;
-    } catch (err) {
-      throw new Error('Device id or User id is invalde');
+    } catch (error) {
+      throw new Error('Error Retrieving Record');
     }
   }
 
@@ -104,7 +109,7 @@ export class DdigService {
       console.log(`Received message on topic ${message.toString()}`);
       const data = this.ProcessMessage(message.toString());
       //this.SetMediandata(Databuffer, data);
-      // this.ProcessTodb(data, devicerecord);
+      this.ProcessTodb(data, devicerecord);
     });
   }
   SetMediandata(Databuffer: Array<number>, data: object) {
