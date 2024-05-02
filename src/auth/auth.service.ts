@@ -5,6 +5,7 @@ import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Roles } from '../auth/enums';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +14,10 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
   ) {}
-  async signup(dto: AuthDto) {
+  async signup(dto: AuthDto, Role?: string) {
+    if (Role === null) {
+      Role = Roles.Doctor;
+    }
     const hash = await argon.hash(dto.password);
     try {
       const user = await this.prisma.users.create({
@@ -26,7 +30,10 @@ export class AuthService {
           birthdate: dto.DateOfBirth,
           height: dto.height,
           weight: dto.weight,
+          MaxRate: dto.MaxRate,
+          MinRate: dto.MinRate,
           hash,
+          Role: Role,
         },
       });
       if (user) {
@@ -49,7 +56,7 @@ export class AuthService {
   async signin(dto: AuthDto2) {
     const user = await this.prisma.users.findUnique({
       where: {
-        email: dto.email,
+        phoneNum: dto.phonenum,
       },
     });
     if (!user) {
@@ -62,12 +69,54 @@ export class AuthService {
     return this.signToken(user.id, user.email);
   }
 
+  // async validateUser(id: number, password: string) {
+  //   const user = await this.prisma.users.findFirst({
+  //     where: {
+  //       id: id,
+  //     }
+  //   });
+  //   if (!user) return null;
+
+  //   const pwValid = await argon.verify(user.hash, password);
+  //   if (!pwValid) return null;
+
+  //   return user;
+  // }
+
+  async validateRole(DoctorId?: number, PatientId?: number) {
+    try {
+      if (DoctorId !== null) {
+        const doc = await this.prisma.users.findUnique({
+          where: {
+            id: DoctorId,
+            Role: Roles.Doctor,
+          },
+        });
+        if (!doc) {
+          throw new Error('Doctor id invalid');
+        }
+      }
+      if (PatientId !== null) {
+        const patient = await this.prisma.users.findUnique({
+          where: {
+            id: PatientId,
+            Role: Roles.Patient,
+          },
+        });
+        if (!patient) {
+          throw new Error('Patient id invalid');
+        }
+      }
+    } catch (err) {
+      throw new Error('Error while validating role');
+    }
+  }
   async signToken(
-    UserId: number,
+    DoctorId: number,
     email: string,
   ): Promise<{ access_token: string }> {
     const payload = {
-      sub: UserId,
+      sub: DoctorId,
       email,
     };
 
