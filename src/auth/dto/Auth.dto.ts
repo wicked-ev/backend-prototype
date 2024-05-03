@@ -3,8 +3,9 @@ import {
   IsEmail,
   IsString,
   IsNumber,
-  IsDate,
+  //IsDate,
   IsOptional,
+  //IsDateString,
 } from 'class-validator';
 
 export class validateRole {
@@ -41,9 +42,10 @@ export class AuthDto {
   @IsString()
   BloodType: string;
 
-  @IsDate()
+  @IsString()
   @IsNotEmpty()
-  DateOfBirth: Date;
+  //@ParseDatePipe({ dateFormat: 'YYYY-MM-DD' })
+  DateOfBirth: string;
 
   @IsNumber()
   @IsOptional()
