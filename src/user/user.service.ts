@@ -5,7 +5,7 @@ import { ActivateDeviceDto, NoteDto, RNPdto } from './dto/index';
 import { Users } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 //import { validate } from 'class-validator';
-import { UpdateDevice, UpNoteDto, UpPatient } from './dto/user.dto';
+import { UpdateDevice, UpNoteDto, UpPatient, userid } from './dto/user.dto';
 import { Roles } from 'src/auth/enums';
 
 @Injectable()
@@ -37,18 +37,22 @@ export class UserService {
     }
   }
 
-  async getUserDevice(userId) {
+  async getUserDevice(userId: number) {
     try {
       if (!userId) {
         throw new Error('Invalid input: userId is null or undefined');
       }
-      const devices = await this.prisma.device.findUnique({
+      console.log(userId);
+      const device = await this.prisma.device.findUnique({
         where: {
           ownerID: userId,
         },
       });
-      delete devices.activateCode;
-      return devices;
+      if (!device) {
+        return device;
+      }
+      delete device.activateCode;
+      return device;
     } catch (error) {
       console.error('Error in getUserDevice:', error);
       throw new Error('Failed to retrieve user devices');
@@ -184,8 +188,8 @@ export class UserService {
     if (accpatient) {
       await this.prisma.previewerList.create({
         data: {
-          PreviewedAccountId: userAcc.AccId,
-          PreviewerAccountId: accpatient.AccId,
+          PreviewedAccountId: accpatient.AccId,
+          PreviewerAccountId: userAcc.AccId,
         },
       });
     } else {
@@ -233,7 +237,7 @@ export class UserService {
       throw new Error(`Error retrieving user: ${error.message}`);
     }
   }
-  async CreateNewNote(dto: NoteDto) {
+  async CreateNewNote(dto: NoteDto, PatientId: number) {
     // const validationErrors = await validate(dto);
     // if (validationErrors.length > 0) {
     //   throw new Error('Invalid input: NoteDto is not valid');
@@ -242,8 +246,8 @@ export class UserService {
     //const patientExists = await this.DoesUserExist(dto.PenitentId);
     // if (!patientExists) {
     //   throw new Error('Invalid patient ID');
-    const patient = await this.getAccount(dto.PatientId);
-    const author = await this.getAccount(dto.AuthorID);
+    const patient = await this.getAccount(PatientId);
+    const author = await this.getAccount(dto.AuthorId);
     try {
       await this.prisma.notes.create({
         data: {
@@ -253,7 +257,7 @@ export class UserService {
           NoteMain: dto.NoteContent,
         },
       });
-      return await this.GetNotesLists(dto.PatientId);
+      return await this.GetNotesLists(PatientId);
     } catch (err) {
       throw new Error(`Error while creating note: ${err.message}`);
     }
@@ -274,7 +278,6 @@ export class UserService {
         },
         select: {
           Nid: true,
-
           NoteSub: true,
           NoteMain: true,
         },
@@ -299,9 +302,24 @@ export class UserService {
     });
     return !!User;
   }
-
+  async getAccountbyId(accountId: number) {
+    try {
+      const account = await this.prisma.accounts.findUnique({
+        where: {
+          AccId: accountId,
+        },
+      });
+      if (account) {
+        return account;
+      }
+    } catch (error) {
+      console.error('Error in GetAccount:', error);
+      throw new Error('Failed to retrieve account');
+    }
+  }
   async GetpatientLists(userId: number) {
     const AccUser = await this.getAccount(userId);
+    console.log(AccUser);
     try {
       const patientList = await this.prisma.previewerList.findMany({
         where: {
@@ -316,8 +334,9 @@ export class UserService {
           PreviewerAccountId: patientList[index].PreviewerAccountId,
           PreviewedAccountId: patientList[index].PreviewedAccountId,
         };
-        const user: any = await this.GetUser(Pid);
-        const device = await this.getUserDevice(Pid);
+        const userAcc = await this.getAccountbyId(Pid);
+        const user: any = await this.GetUser(userAcc.AccountOwner);
+        const device = await this.getUserDevice(userAcc.AccountOwner);
         delete user.hash;
         data['user'] = { user, device };
         List.push(data);
@@ -344,29 +363,35 @@ export class UserService {
 
     return newObj;
   }
-  async Updatepatient(dto: Partial<UpPatient>) {
-    let dataraw: Users;
-    dataraw.id = dto.id;
-    dataraw.phoneNum = dto.phoneNum;
-    dataraw.email = dto.email;
-    dataraw.lastName = dto.lastname;
-    dataraw.firstName = dto.firstname;
-    dataraw.weight = dto.weight;
-    dataraw.height = dto.height;
-    dataraw.BloodType = dto.BloodType;
-    dataraw.birthdate = dto.birthdate;
-    const data = this.removeUndefinedOrNull(dataraw);
-    const patientexist: boolean = await this.DoesUserExist(dto.id);
+  async Updatepatient(userid: number, dto: Partial<UpPatient>) {
+    // let dataraw: Users;
+    // console.log(dto);
+    // dataraw.phoneNum = dto.phoneNum;
+    // dataraw.email = dto.email;
+    // dataraw.lastName = dto.lastname;
+    // dataraw.firstName = dto.firstname;
+    // dataraw.weight = dto.weight;
+    // dataraw.height = dto.height;
+    // dataraw.MaxRate = dto.MaxRate;
+    // dataraw.MinRate = dto.MinRate;
+    // dataraw.BloodType = dto.BloodType;
+    // dataraw.birthdate = dto.birthdate;
+    // const data = this.removeUndefinedOrNull(dataraw);
+    const patientexist: boolean = await this.DoesUserExist(userid);
     if (!patientexist) {
       throw new Error('Patient not Found');
     }
     try {
       const updatedPatient = await this.prisma.users.update({
         where: {
-          id: dto.id,
+          id: userid,
         },
-        data,
+        data: {
+          ...dto,
+          updatedAt: new Date(),
+        },
       });
+      delete updatedPatient.hash;
       return updatedPatient;
     } catch (err) {
       throw new Error(`Error updating Patient: ${err.message}`);
