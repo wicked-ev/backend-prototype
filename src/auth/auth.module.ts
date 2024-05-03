@@ -7,6 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 //import { JwtStrategy } from './startegy/jwt.startegy';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './startegy';
+import { UserModule } from '../user/user.module';
 import { UserService } from 'src/user/user.service';
 import { ConfigService } from '@nestjs/config';
 //import { JwtStrategy } from './startegy';
@@ -23,6 +24,7 @@ import { ConfigService } from '@nestjs/config';
     }),
     ConfigModule,
     PassportModule,
+    UserModule,
   ],
   controllers: [AuthController],
   providers: [
