@@ -15,20 +15,20 @@ datasource db {
 
 model Users {
   id        Int      @id @default(autoincrement())
-  email String? 
+  email String?   @default("")
   phoneNum  String @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @default(now())
   birthdate DateTime? 
   firstName String
   lastName  String
-  BloodType String?
-  weight  Float?
-  height Float?
-  MinRate Int? // add this new attribute to update patient dto
-  MaxRate Int?
+  BloodType String? @default("")
+  weight  Float?  @default(0)
+  height Float?   @default(0)
+  MinRate Int?    @default(0)// add this new attribute to update patient dto
+  MaxRate Int?    @default(0)
   hash String
-  Role String
+  Role String     @default("Doctor")
   Devices Device[] @relation("owned")
   DevicesActivated Device[] @relation("active")
   Account accounts?
@@ -37,7 +37,7 @@ model Users {
 model Notes {
   Nid Int @id @default(autoincrement())
   createAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt DateTime @updatedAt @default(now())
   NoteAutherId Int?
   Auther accounts? @relation(name: "AutherNote",fields: [NoteAutherId], references: [AccId])
   PatientId Int?
@@ -48,9 +48,9 @@ model Notes {
 
 model Device {
   Sid        Int @id @default(autoincrement())
-  activateCode Int @unique
+  activateCode Int @unique 
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updateAt DateTime @updatedAt @default(now())
   ownerID Int? @unique
   owner Users? @relation(name: "owned",fields: [ownerID], references: [id])
   Activator Int?
