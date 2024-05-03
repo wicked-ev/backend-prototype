@@ -32,13 +32,9 @@ export class RNPdto extends AuthDto {
 }
 
 export class UpPatient {
-  @IsNumber()
-  @IsNotEmpty()
-  id: number;
-
-  @IsDate()
-  @IsNotEmpty()
-  updatedAt: Date;
+  // @IsNumber()
+  // @IsNotEmpty()
+  // id: number;
 
   @IsEmail()
   @IsOptional()
@@ -71,15 +67,23 @@ export class UpPatient {
   @IsNumber()
   @IsOptional()
   height: number;
+
+  @IsNumber()
+  @IsOptional()
+  MinRate: number;
+
+  @IsNumber()
+  @IsOptional()
+  MaxRate: number;
 }
 export class NoteDto {
   @IsNumber()
   @IsNotEmpty()
-  AuthorID: number;
+  AuthorId: number;
 
-  @IsNumber()
-  @IsNotEmpty()
-  PatientId: number;
+  // @IsNumber()
+  // @IsNotEmpty()
+  // PatientId: number;
 
   @IsString()
   @IsNotEmpty()
@@ -111,7 +115,11 @@ export class UpNoteDto {
   @IsOptional()
   NoteContent: string;
 }
-
+export class userid {
+  @IsNumber()
+  @IsNotEmpty()
+  UserId: number;
+}
 export class UpdateDevice {
   @IsNumber()
   @IsNotEmpty()
