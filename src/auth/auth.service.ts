@@ -6,6 +6,9 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Roles } from '../auth/enums';
+//import { error } from 'console';
+//import { error } from 'console';
+// import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AuthService {
@@ -20,13 +23,14 @@ export class AuthService {
     }
     const hash = await argon.hash(dto.password);
     try {
+      console.log('new request');
+      console.log(dto);
       const user = await this.prisma.users.create({
         data: {
           phoneNum: dto.phoneNum,
           email: dto.email,
           firstName: dto.firstname,
           lastName: dto.lastname,
-          BloodType: dto.BloodType,
           birthdate: dto.DateOfBirth,
           height: dto.height,
           weight: dto.weight,
@@ -36,12 +40,17 @@ export class AuthService {
           Role: Role,
         },
       });
+      console.log('we got request');
       if (user) {
-        await this.prisma.accounts.create({
-          data: {
-            AccountOwner: user.id,
-          },
-        });
+        try {
+          await this.prisma.accounts.create({
+            data: {
+              AccountOwner: user.id,
+            },
+          });
+        } catch (error) {
+          throw new Error('error creating account');
+        }
       }
       return this.signToken(user.id, user.email);
     } catch (error) {
@@ -66,7 +75,7 @@ export class AuthService {
     if (!pwMatches) {
       throw new Error('Wrong credentials');
     }
-    return this.signToken(user.id, user.email);
+    return this.signToken(user.id, user.phoneNum);
   }
 
   // async validateUser(id: number, password: string) {
@@ -85,26 +94,37 @@ export class AuthService {
 
   async validateRole(DoctorId?: number, PatientId?: number) {
     try {
-      if (DoctorId !== null) {
+      console.log('validating role');
+      console.log(DoctorId);
+      if (DoctorId != null && PatientId != undefined) {
+        console.log('role doc not null');
+        console.log(DoctorId);
+        // const parsedDoctorId =
+        //   typeof DoctorId === 'string' ? parseInt(DoctorId, 10) : DoctorId;
         const doc = await this.prisma.users.findUnique({
           where: {
             id: DoctorId,
-            Role: Roles.Doctor,
           },
         });
-        if (!doc) {
-          throw new Error('Doctor id invalid');
+        console.log(doc);
+        console.log('first query done');
+        if (doc.Role != Roles.Doctor) {
+          throw new Error('Access denied');
         }
       }
-      if (PatientId !== null) {
+      console.log(PatientId);
+      console.log(typeof PatientId);
+      if (PatientId != null && PatientId != undefined) {
+        console.log('Patient null we should be here');
+        // const parsedUserId =
+        //   typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
         const patient = await this.prisma.users.findUnique({
           where: {
             id: PatientId,
-            Role: Roles.Patient,
           },
         });
-        if (!patient) {
-          throw new Error('Patient id invalid');
+        if (patient.Role != Roles.Patient) {
+          throw new Error('Access denied');
         }
       }
     } catch (err) {
@@ -112,12 +132,12 @@ export class AuthService {
     }
   }
   async signToken(
-    DoctorId: number,
-    email: string,
+    userId: number,
+    phone: string,
   ): Promise<{ access_token: string }> {
     const payload = {
-      sub: DoctorId,
-      email,
+      sub: userId,
+      phone,
     };
 
     const secret = this.config.get('JWT_SECRET');
@@ -126,5 +146,20 @@ export class AuthService {
       secret: secret,
     });
     return { access_token: token };
+  }
+  removeUndefinedOrNull<T extends object>(obj: T): Partial<T> {
+    const newObj: Partial<T> = {};
+
+    for (const key in obj) {
+      if (
+        obj.hasOwnProperty(key) &&
+        obj[key] !== undefined &&
+        obj[key] !== null
+      ) {
+        newObj[key] = obj[key];
+      }
+    }
+
+    return newObj;
   }
 }
