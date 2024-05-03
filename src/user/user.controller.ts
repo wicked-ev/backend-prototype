@@ -1,4 +1,12 @@
-import { Controller, Post, UseGuards, Body, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UseGuards,
+  Body,
+  Put,
+  Delete,
+  Param,
+} from '@nestjs/common';
 import { Get } from '@nestjs/common';
 import { Users } from '@prisma/client';
 //import { AuthGuard } from '@nestjs/passport';
@@ -14,6 +22,7 @@ import {
   NoteDto,
   UpNoteDto,
   UpPatient,
+  userid,
 } from './dto';
 //@UseGuards(jwtguard)
 @Controller('user')
@@ -54,28 +63,46 @@ export class UserController {
   }
 
   @Get('/patients')
-  async getPatientList(@Body() userId: number) {
-    await this.authService.validateRole(userId);
-    return await this.userservice.GetpatientLists(userId);
+  async getPatientList(@Body() dto: userid) {
+    await this.authService.validateRole(dto.UserId, null);
+    return await this.userservice.GetpatientLists(dto.UserId);
   }
 
   @Put('/patients/:id')
-  async updatePatient(@Body() dto: Partial<UpPatient>) {
-    await this.authService.validateRole(null, dto.id);
-    return await this.userservice.Updatepatient(dto);
+  async updatePatient(
+    @Param('id') userId: number,
+    @Body() dto: Partial<UpPatient>,
+  ) {
+    const parsedUserId =
+      typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    await this.authService.validateRole(null, parsedUserId);
+    return await this.userservice.Updatepatient(parsedUserId, dto);
   }
 
   @Delete('/patients/:id')
-  async deletePatientFromList(@Body() PatientId: number, UserId: number) {
-    await this.authService.validateRole(UserId, PatientId);
-    return await this.userservice.DeletePatientFromList(PatientId, UserId);
+  async deletePatientFromList(
+    @Param('id') PatientId: number,
+    @Body() dto: userid,
+  ) {
+    const parsedUserId =
+      typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
+    await this.authService.validateRole(dto.UserId, parsedUserId);
+    return await this.userservice.DeletePatientFromList(
+      parsedUserId,
+      dto.UserId,
+    );
   }
 
   //notes
   @Post('/patients/:patientId/notes')
-  async creatNewNote(@Body() dto: NoteDto) {
-    await this.authService.validateRole(dto.AuthorID, dto.PatientId);
-    return await this.userservice.CreateNewNote(dto);
+  async creatNewNote(
+    @Param('patientId') PatientId: number,
+    @Body() dto: NoteDto,
+  ) {
+    const parsedPatientId =
+      typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
+    await this.authService.validateRole(dto.AuthorId, parsedPatientId);
+    return await this.userservice.CreateNewNote(dto, parsedPatientId);
   }
   @Get('/patients/:patientId/notes')
   async getNoteList(@Body() PatientId: number) {
