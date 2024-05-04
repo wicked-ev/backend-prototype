@@ -38,8 +38,8 @@ model Notes {
   Nid Int @id @default(autoincrement())
   createAt DateTime @default(now())
   updateAt DateTime @updatedAt @default(now())
-  NoteAutherId Int?
-  Auther accounts? @relation(name: "AutherNote",fields: [NoteAutherId], references: [AccId])
+  AuthorId Int?
+  Author accounts? @relation(name: "AutherNote",fields: [AuthorId], references: [AccId])
   PatientId Int?
   patient accounts? @relation(name: "Note", fields: [PatientId], references: [AccId])
   NoteSub String
@@ -111,8 +111,8 @@ model Heart_Rate_Record {
 
 model UserListRecords {
   ULRid Int @id @default(autoincrement())
-  AutherDeviceid Int? @unique //each Record is unique based on the auther
-  device Device? @relation(fields: [AutherDeviceid], references: [Sid])
+  AuthorDeviceid Int? @unique //each Record is unique based on the auther
+  device Device? @relation(fields: [AuthorDeviceid], references: [Sid])
   User Int? //not unique user can have mulitple records with diffrenet autherDevices
   user accounts? @relation(fields: [User], references: [AccountOwner])
   HR_Record Heart_Rate_Record[]
