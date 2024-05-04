@@ -95,17 +95,17 @@ export class NoteDto {
 }
 
 export class UpNoteDto {
-  @IsNumber()
-  @IsNotEmpty()
-  NoteId: number;
+  // @IsNumber()
+  // @IsNotEmpty()
+  // Nid: number;
 
   @IsNumber()
   @IsNotEmpty()
   AuthorId: number;
 
-  @IsNumber()
-  @IsNotEmpty()
-  PatientId: number;
+  // @IsNumber()
+  // @IsNotEmpty()
+  // PatientId: number;
 
   @IsString()
   @IsOptional()
