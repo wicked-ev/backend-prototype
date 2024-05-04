@@ -53,7 +53,7 @@ export class DdigService {
     try {
       const devicerecord = await this.prisma.userListRecords.create({
         data: {
-          AutherDeviceid: sid,
+          AuthorDeviceid: sid,
           User: ownerid,
         },
       });
@@ -75,7 +75,7 @@ export class DdigService {
       }
       const devicerecord = await this.prisma.userListRecords.findUnique({
         where: {
-          AutherDeviceid: sid,
+          AuthorDeviceid: sid,
           User: ownerid,
         },
       });
