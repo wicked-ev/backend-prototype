@@ -71,6 +71,9 @@ export class AuthService {
     if (!user) {
       throw new Error('Wrong credentials');
     }
+    if (user.Role == Roles.Patient) {
+      throw new Error('unAuthorized user');
+    }
     const pwMatches = await argon.verify(user.hash, dto.password);
     if (!pwMatches) {
       throw new Error('Wrong credentials');
