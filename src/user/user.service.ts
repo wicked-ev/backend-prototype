@@ -4,8 +4,8 @@ import { ActivateDeviceDto, NoteDto, RNPdto } from './dto/index';
 //import { error } from 'console';
 import { Users } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
-//import { validate } from 'class-validator';
-import { UpdateDevice, UpNoteDto, UpPatient, userid } from './dto/user.dto';
+//import { validate, IsNumber } from 'class-validator';
+import { UpdateDevice, UpNoteDto, UpPatient } from './dto/user.dto';
 import { Roles } from 'src/auth/enums';
 
 @Injectable()
@@ -66,7 +66,7 @@ export class UserService {
       }
       //const isDeviceOwned = await this.isDeviceOwned(dto.DeviceSID);
       const isDevice = await this.DoseDeviceExist(dto.DeviceSID);
-      if (!isDevice) {
+      if (isDevice) {
         const deviceupdate = await this.prisma.device.update({
           where: {
             Sid: dto.DeviceSID,
@@ -96,12 +96,9 @@ export class UserService {
     }
   }
 
-  async DeactivateDevice(sid: number, author: number) {
+  async DeActivateDevice(sid: number, author: number) {
     const isdevice = await this.DoseDeviceExist(sid);
-    const isauthoer = await this.DoesUserExist(author);
-    if (!isauthoer) {
-      throw new Error('User not found');
-    }
+    //const isauthoer = await this.DoesUserExist(author);
     if (!isdevice) {
       throw new Error('Device not found');
     }
@@ -251,7 +248,7 @@ export class UserService {
     try {
       await this.prisma.notes.create({
         data: {
-          NoteAutherId: author.AccId,
+          AuthorId: author.AccId,
           PatientId: patient.AccId,
           NoteSub: dto.NoteTitle,
           NoteMain: dto.NoteContent,
@@ -444,33 +441,41 @@ export class UserService {
     }
   }
 
-  async UpdateNote(dto: Partial<UpNoteDto>) {
-    const patient = await this.getAccount(dto.PatientId);
-    const author = await this.getAccount(dto.AuthorId);
-    const dataraw = {
-      Nid: dto.NoteId,
-      NoteAutherId: author.AccId,
-      PenitentId: patient.AccId,
-      NoteSub: dto.NoteTitle,
-      NoteMain: dto.NoteContent,
-    };
-    const data = this.removeUndefinedOrNull(dataraw);
+  async UpdateNote(Nid: number, dto: Partial<UpNoteDto>) {
+    // dto.PatientId = (await this.getAccount(dto.PatientId)).AccId;
+    dto.AuthorId = (await this.getAccount(dto.AuthorId)).AccId;
+    // const dataraw = {
+    //   Nid: dto.Nid,
+    //   NoteAutherId: author.AccId,
+    //   PenitentId: patient.AccId,
+    //   NoteSub: dto.NoteTitle,
+    //   NoteMain: dto.NoteContent,
+    // };
+    //const data = this.removeUndefinedOrNull(dataraw);
     //const validationErrors = await validate(dto);
     // if (validationErrors.length > 0) {
     //   throw new Error('Invalid input: UpNoteDto is not valid');
     // }
-    const note = await this.doesNotexist(dto.NoteId);
+    console.log('we here');
+    const note = await this.doesNotexist(Nid);
+    console.log('we got note');
+    console.log(note);
     if (!note) {
       throw new Error(`Note not found`);
     }
     try {
-      await this.prisma.notes.update({
+      const note = await this.prisma.notes.update({
         where: {
-          Nid: dto.NoteId,
+          Nid: Nid,
         },
-        data,
+        data: {
+          AuthorId: dto.AuthorId,
+          NoteSub: dto.NoteTitle,
+          NoteMain: dto.NoteContent,
+          updateAt: new Date(),
+        },
       });
-      return await this.GetNotesLists(dto.PatientId);
+      return note;
     } catch (err) {
       throw new Error(`Error updating note: ${err.message}`);
     }
