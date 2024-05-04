@@ -14,7 +14,7 @@ import { Users } from '@prisma/client';
 import { GetUser } from 'src/auth/decorators';
 import { jwtguard } from 'src/auth/guard';
 import { UserService } from './user.service';
-import { UpdateDevice } from './dto/user.dto';
+//import { UpdateDevice } from './dto/user.dto';
 import { AuthService } from '../auth/auth.service';
 import {
   ActivateDeviceDto,
@@ -24,6 +24,7 @@ import {
   UpPatient,
   userid,
 } from './dto';
+//if you want to test the jwt guard just uncommnet the line below
 //@UseGuards(jwtguard)
 @Controller('user')
 export class UserController {
@@ -44,15 +45,24 @@ export class UserController {
     return await this.userservice.ActivateDevice(dto);
   }
 
-  @Put('/devices/:id')
-  async updateDevice(@Body() dto: UpdateDevice) {
-    await this.authService.validateRole(dto.ActivatorId, dto.NeWOwner);
-    return await this.userservice.UpdateDevice(dto);
-  }
+  // @Put('/devices/:id')
+  // async updateDevice(@Param('id') device: number, @Body() dto: UpdateDevice) {
+  //   await this.authService.validateRole(dto.ActivatorId, dto.NeWOwner);
+  //   return await this.userservice.UpdateDevice(dto);
+  // }
 
+  @Put('/devices/:id')
+  async DesActviateDevice(@Param('id') deviceSid: number, @Body() dto: userid) {
+    const parsedDevice =
+      typeof deviceSid === 'string' ? parseInt(deviceSid, 10) : deviceSid;
+    await this.authService.validateRole(dto.UserId, null);
+    return await this.userservice.DeActivateDevice(parsedDevice, dto.UserId);
+  }
   @Delete('/devices/:id')
-  async DeleteDevice(@Body() DeviceId: number) {
-    return await this.userservice.DeleteDevice(DeviceId);
+  async DeleteDevice(@Param('id') DeviceSid: number) {
+    const parsedDevice =
+      typeof DeviceSid === 'string' ? parseInt(DeviceSid, 10) : DeviceSid;
+    return await this.userservice.DeleteDevice(parsedDevice);
   }
 
   //patients
@@ -105,18 +115,27 @@ export class UserController {
     return await this.userservice.CreateNewNote(dto, parsedPatientId);
   }
   @Get('/patients/:patientId/notes')
-  async getNoteList(@Body() PatientId: number) {
-    await this.authService.validateRole(null, PatientId);
-    return await this.userservice.GetNotesLists(PatientId);
+  async getNoteList(@Param('patientId') PatientId: number) {
+    const parsedPatientId =
+      typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
+    await this.authService.validateRole(null, parsedPatientId);
+    return await this.userservice.GetNotesLists(parsedPatientId);
   }
   @Put('/notes/:id')
-  async updateNote(@Body() dto: Partial<UpNoteDto>) {
-    await this.authService.validateRole(dto.AuthorId, dto.PatientId);
-    return this.userservice.UpdateNote(dto);
+  async updateNote(
+    @Param('id') NoteId: number,
+    @Body() dto: Partial<UpNoteDto>,
+  ) {
+    const parsedNoteId =
+      typeof NoteId === 'string' ? parseInt(NoteId, 10) : NoteId;
+    await this.authService.validateRole(dto.AuthorId, null);
+    return this.userservice.UpdateNote(parsedNoteId, dto);
   }
 
   @Delete('/notes/:id')
-  DeleteNote(@Body() NoteId: number) {
-    return this.userservice.DeleteNote(NoteId);
+  DeleteNote(@Param('id') NoteId: number) {
+    const parsedNoteId =
+      typeof NoteId === 'string' ? parseInt(NoteId, 10) : NoteId;
+    return this.userservice.DeleteNote(parsedNoteId);
   }
 }
