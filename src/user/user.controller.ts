@@ -23,6 +23,8 @@ import {
   UpNoteDto,
   UpPatient,
   userid,
+  HeartRate,
+  currnetTime,
 } from './dto';
 //if you want to test the jwt guard just uncommnet the line below
 //@UseGuards(jwtguard)
@@ -102,7 +104,29 @@ export class UserController {
       dto.UserId,
     );
   }
+  //not tested yet
+  @Get('/patients/:id/heartrates/')
+  async getHeartbeat(@Param('id') PatientId: number, @Body() dto: HeartRate) {
+    const parsedPatientId =
+      typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
+    await this.authService.validateRole(dto.UserId, parsedPatientId);
+    return await this.userservice.getHeartbeat(
+      parsedPatientId,
+      dto.startDate,
+      dto.endDate,
+    );
+  }
 
+  @Get('/patients/:id/heartrate/')
+  async getHeartrate(@Param('id') PatientId: number, @Body() dto: currnetTime) {
+    const parsedPatientId =
+      typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
+    await this.authService.validateRole(null, parsedPatientId);
+    return await this.userservice.getLastestHeartRate(
+      parsedPatientId,
+      dto.time,
+    );
+  }
   //notes
   @Post('/patients/:patientId/notes')
   async creatNewNote(
