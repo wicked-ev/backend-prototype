@@ -6,12 +6,14 @@ import { DDIGModule } from './DDIG/ddig.module';
 import { UserModule } from './user/user.module';
 import { PrismaService } from './prisma/prisma.service';
 import { ConfigModule } from '@nestjs/config';
+import { WebsocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
     AuthModule,
     DDIGModule,
     UserModule,
+    WebsocketModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
