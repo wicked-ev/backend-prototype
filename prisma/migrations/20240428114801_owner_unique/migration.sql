@@ -5,4 +5,4 @@
 
 */
 -- CreateIndex
-CREATE UNIQUE INDEX "Devices_ownerID_key" ON "Devices"("ownerID");
+
