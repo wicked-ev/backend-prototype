@@ -31,6 +31,25 @@ export class RNPdto extends AuthDto {
   Userid: number;
 }
 
+export class HeartRate {
+  @IsNotEmpty()
+  @IsNumber()
+  UserId: number;
+
+  @IsDate()
+  @IsNotEmpty()
+  startDate: string;
+
+  @IsDate()
+  @IsNotEmpty()
+  endDate: string;
+}
+export class currnetTime {
+  @IsDate()
+  @IsNotEmpty()
+  time: string;
+}
+
 export class UpPatient {
   // @IsNumber()
   // @IsNotEmpty()
