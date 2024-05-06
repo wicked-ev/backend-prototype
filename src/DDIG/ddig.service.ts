@@ -4,9 +4,12 @@ import { UserService } from '../user/user.service';
 import { DDIGDto, ReceivedDataDto } from './dto/DDIG.dto';
 import { ConfigService } from '@nestjs/config';
 import { connect, IClientOptions } from 'mqtt';
+
 @Injectable()
 export class DdigService {
   private BrokerUrl: string;
+  private MaxRate: number = 0;
+  private MinRate: number = 0;
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
@@ -25,6 +28,26 @@ export class DdigService {
     }
     return device;
   }
+  async getUserRateConstraints(userid: number) {
+    try {
+      const user = await this.prisma.users.findUnique({
+        where: {
+          id: userid,
+        },
+        select: {
+          id: true,
+          MaxRate: true,
+          MinRate: true,
+        },
+      });
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return user;
+    } catch (error) {
+      throw new Error('User not found');
+    }
+  }
 
   async SDPR(dto: DDIGDto) {
     const device = await this.GetDevice(dto.sid);
@@ -37,6 +60,9 @@ export class DdigService {
     if (!devicerecord) {
       devicerecord = await this.CreateUserDeviceRecord(dto.sid, device.ownerID);
     }
+    const userConstraints = await this.getUserRateConstraints(device.ownerID);
+    this.MinRate = userConstraints.MinRate;
+    this.MaxRate = userConstraints.MaxRate;
     const topic = await this.CreateTopic(dto.sid, device.ownerID);
     this.connection(topic, device.ownerID, dto.sid, devicerecord);
     return { Topic: topic, permissions: true };
@@ -73,7 +99,7 @@ export class DdigService {
       if (!isUser) {
         throw new Error('User not found');
       }
-      const devicerecord = await this.prisma.userListRecords.findUnique({
+      const devicerecord = await this.prisma.userListRecords.findFirst({
         where: {
           AuthorDeviceid: sid,
           User: ownerid,
@@ -135,7 +161,25 @@ export class DdigService {
     }
   }
 
+  async getPatientPreviewer(PatientId: number) {
+    const PatientAcc = await this.userservice.getAccount(PatientId);
+    try {
+      const PreviewerList = await this.prisma.previewerList.findMany({
+        where: {
+          PreviewedAccountId: PatientAcc.AccId,
+        },
+      });
+    } catch (error) {
+      throw new Error(`error getting Previewers`);
+    }
+  }
   async ProcessTodb(data: ReceivedDataDto, devicerecord: any) {
+    if (data.beat >= this.MaxRate) {
+      console.log('Max Rate Reached');
+    }
+    if (data.beat <= this.MinRate) {
+      console.log('Min Rate Reached');
+    }
     try {
       await this.prisma.heart_Rate_Record.create({
         data: {

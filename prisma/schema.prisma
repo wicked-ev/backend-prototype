@@ -55,7 +55,7 @@ model Device {
   owner Users? @relation(name: "owned",fields: [ownerID], references: [id])
   Activator Int?
   activtor Users? @relation(name: "active", fields: [Activator], references: [id])
-  userlist UserListRecords?
+  userlist UserListRecords[]
   @@map("Devices")
 }
 
@@ -83,6 +83,7 @@ model PreviewerList {
 
 model Notification {
   Notid Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
   UserAccid Int?
   notifDate DateTime @default(now())
   useracc accounts? @relation(fields: [UserAccid], references: [AccId])
@@ -101,7 +102,7 @@ model Appointment {
 }
 model Heart_Rate_Record {
   Rid      Int @id @default(autoincrement())
-  ULRid     Int? @unique
+  ULRid     Int
   ulrid UserListRecords? @relation(fields: [ULRid], references: [ULRid])
   beat      Float
   redReading   Float
@@ -111,7 +112,8 @@ model Heart_Rate_Record {
 
 model UserListRecords {
   ULRid Int @id @default(autoincrement())
-  AuthorDeviceid Int? @unique //each Record is unique based on the auther
+  createdAt DateTime @default(now())
+  AuthorDeviceid Int?
   device Device? @relation(fields: [AuthorDeviceid], references: [Sid])
   User Int? //not unique user can have mulitple records with diffrenet autherDevices
   user accounts? @relation(fields: [User], references: [AccountOwner])

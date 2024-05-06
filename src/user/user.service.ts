@@ -162,7 +162,9 @@ export class UserService {
     const patient = await this.isPatientRegistered(dto);
     if (!patient) {
       try {
+        console.log('we create a new patient');
         const token = await this.Authservice.signup(dto, Roles.Patient);
+        console.log('user created');
         if (typeof token !== null) {
           const patient = await this.isPatientRegistered(dto);
           if (patient) {
@@ -335,7 +337,7 @@ export class UserService {
         const user: any = await this.GetUser(userAcc.AccountOwner);
         const device = await this.getUserDevice(userAcc.AccountOwner);
         delete user.hash;
-        data['user'] = { user, device };
+        data['users'] = { user, device };
         List.push(data);
       }
       return List;
@@ -440,7 +442,94 @@ export class UserService {
       throw new Error(`Error updating note: ${err.message}`);
     }
   }
-
+  async getLastestHeartRate(patientId: number, time: string) {
+    const patientAcc = await this.getAccount(patientId);
+    try {
+      const listOfRecords = await this.prisma.userListRecords.findMany({
+        where: {
+          User: patientAcc.AccId,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+      if (!listOfRecords) {
+        return { message: 'records not found' };
+      }
+      const ULRidLastest = listOfRecords[listOfRecords.length - 1].ULRid;
+      try {
+        const lastrecord = await this.prisma.heart_Rate_Record.findFirst({
+          where: {
+            ULRid: ULRidLastest,
+          },
+          orderBy: {
+            timeStamp: 'desc',
+          },
+          take: 1,
+        });
+        if (!lastrecord) {
+          return { message: 'no values found in record' };
+        }
+        const timestamp = new Date(time);
+        const timeDiff: number = Math.abs(
+          lastrecord.timeStamp.getTime() - timestamp.getTime(),
+        );
+        const minutesDiff: number = Math.floor(timeDiff / (1000 * 60));
+        if (minutesDiff >= 5) {
+          return { message: null };
+        } else {
+          return { lastrecord };
+        }
+      } catch (error) {
+        throw new Error(`Error getting lastest record`);
+      }
+    } catch (error) {
+      throw new Error(`Error getting list of records`);
+    }
+  }
+  async getHeartbeat(patientId: number, startDate: string, endDate: string) {
+    const patientAcc = await this.getAccount(patientId);
+    try {
+      const listOfRecords = await this.prisma.userListRecords.findMany({
+        where: {
+          User: patientAcc.AccId,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+      if (!listOfRecords) {
+        return { message: 'records not found' };
+      }
+      const ULRidLastest = listOfRecords[listOfRecords.length - 1].ULRid;
+      try {
+        const record = await this.prisma.heart_Rate_Record.findMany({
+          where: {
+            ULRid: ULRidLastest,
+            timeStamp: {
+              gte: new Date(startDate),
+              lte: new Date(endDate),
+            },
+          },
+          orderBy: {
+            timeStamp: 'asc',
+          },
+        });
+        if (!record) {
+          return { message: 'no values found in record' };
+        }
+        return record;
+      } catch (error) {
+        throw new Error(`Error while getting the Records id`);
+      }
+    } catch (error) {
+      throw new Error(`Error while getting list of Records`);
+    }
+    try {
+    } catch (err) {
+      throw new Error(`Error get data`);
+    }
+  }
   async UpdateNote(Nid: number, dto: Partial<UpNoteDto>) {
     // dto.PatientId = (await this.getAccount(dto.PatientId)).AccId;
     dto.AuthorId = (await this.getAccount(dto.AuthorId)).AccId;

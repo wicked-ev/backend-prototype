@@ -18,7 +18,7 @@ export class AuthService {
     private config: ConfigService,
   ) {}
   async signup(dto: AuthDto, Role?: string) {
-    if (Role === null) {
+    if (Role === null || Role === undefined) {
       Role = Roles.Doctor;
     }
     const hash = await argon.hash(dto.password);
