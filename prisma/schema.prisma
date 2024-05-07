@@ -29,7 +29,7 @@ model Users {
   MaxRate Int?    @default(0)
   hash String
   Role String     @default("Doctor")
-  Devices Device[] @relation("owned")
+  Devices Device? @relation("owned")
   DevicesActivated Device[] @relation("active")
   Account accounts?
   @@map("Users")
