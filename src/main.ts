@@ -20,6 +20,6 @@ async function bootstrap() {
   const server = http.createServer(app.getHttpAdapter().getInstance());
   const wss = new WebSocket.Server({ server });
   app.useWebSocketAdapter(new WsAdapter(wss));
-  await app.listen(3000);
+  await app.listen(5000);
 }
 bootstrap();

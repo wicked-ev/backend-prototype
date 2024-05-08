@@ -4,6 +4,7 @@ import { UserService } from '../user/user.service';
 import { DDIGDto, ReceivedDataDto } from './dto/DDIG.dto';
 import { ConfigService } from '@nestjs/config';
 import { connect, IClientOptions } from 'mqtt';
+import { log } from 'console';
 
 @Injectable()
 export class DdigService {
@@ -56,6 +57,8 @@ export class DdigService {
     } else if (!device.ownerID) {
       throw new Error('Device not owned');
     }
+    console.log('device owner', device.ownerID);
+
     let devicerecord = await this.getDeviceRecord(dto.sid, device.ownerID);
     if (!devicerecord) {
       devicerecord = await this.CreateUserDeviceRecord(dto.sid, device.ownerID);
@@ -93,6 +96,9 @@ export class DdigService {
     try {
       const isDevice = await this.userservice.DoseDeviceExist(sid);
       const isUser = await this.userservice.DoesUserExist(ownerid);
+      console.log('device', isDevice);
+      console.log('user', isUser);
+
       if (!isDevice) {
         throw new Error('Device not found');
       }
@@ -181,9 +187,12 @@ export class DdigService {
       console.log('Min Rate Reached');
     }
     try {
+      console.log('device record', devicerecord);
+      console.log("data ", data);
+      
       await this.prisma.heart_Rate_Record.create({
         data: {
-          ULRid: devicerecord.id,
+          ULRid: devicerecord.ULRid,
           ir_Reading: data.ir_Reading,
           redReading: data.redReading,
           beat: data.beat,

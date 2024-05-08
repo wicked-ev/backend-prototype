@@ -11,6 +11,7 @@ export class DdigController {
   // }
   @Post('SDPR')
   SDPR(@Body() dto: DDIGDto) {
+    console.log('get request from device', dto.sid);
     return this.ddig.SDPR(dto);
   }
 }

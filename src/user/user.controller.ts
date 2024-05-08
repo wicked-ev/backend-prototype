@@ -77,9 +77,11 @@ export class UserController {
   }
 
   @Get('/patients')
-  async getPatientList(@Body() dto: userid) {
-    await this.authService.validateRole(dto.UserId, null);
-    return await this.userservice.GetpatientLists(dto.UserId);
+  @UseGuards(jwtguard)
+  async getPatientList(@GetUser() user: Users) {
+    await this.authService.validateRole(user.id, null);
+    console.log('user', user.id);
+    return await this.userservice.GetpatientLists(user.id);
   }
 
   @Put('/patients/:id')
@@ -120,14 +122,18 @@ export class UserController {
   }
 
   @Get('/patients/:id/heartrate/')
-  async getHeartrate(@Param('id') PatientId: number, @Body() dto: currnetTime) {
+  async getHeartrate(@Param('id') PatientId: number) {
     const parsedPatientId =
       typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
     await this.authService.validateRole(null, parsedPatientId);
+    const now = new Date();
+    const formattedDate = now.toISOString();
+    console.log('actual date', formattedDate.toString());
     return await this.userservice.getLastestHeartRate(
       parsedPatientId,
-      dto.time,
+      formattedDate ,
     );
+    //  Math.floor(Math.random() * (90 - 50 + 1)) + 50;
   }
   //notes
   @Post('/patients/:patientId/notes')

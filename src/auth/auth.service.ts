@@ -109,7 +109,7 @@ export class AuthService {
             id: DoctorId,
           },
         });
-        console.log(doc);
+        console.log("doc",doc);
         console.log('first query done');
         if (doc.Role != Roles.Doctor) {
           throw new Error('Access denied');
