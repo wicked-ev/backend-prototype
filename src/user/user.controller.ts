@@ -131,7 +131,7 @@ export class UserController {
     console.log('actual date', formattedDate.toString());
     return await this.userservice.getLastestHeartRate(
       parsedPatientId,
-      formattedDate ,
+      formattedDate,
     );
     //  Math.floor(Math.random() * (90 - 50 + 1)) + 50;
   }
@@ -180,12 +180,22 @@ export class UserController {
       dto.AppointmentDate,
     );
   }
-  @Get('/appointments/:id')
-  async getAppointmentList(@Param('id') dto: userid) {
-    const parsedUserId =
-      typeof dto.UserId === 'string' ? parseInt(dto.UserId, 10) : dto.UserId;
-    await this.authService.validateRole(parsedUserId, null);
-    return await this.userservice.getAppointment(parsedUserId);
+  //   @Get('/appointments/:id')
+  //   async getAppointmentList(@Param('id') dto: number) {
+  //     console.log("get a request appoitment")
+  //     const parsedUserId =
+  //       typeof dto === 'string' ? parseInt(dto, 10) : dto;
+  //     await this.authService.validateRole(parsedUserId, null);
+  //     return await this.userservice.getAppointment(parsedUserId);
+  //   }
+  // }
+
+  @Get('/appointments')
+  @UseGuards(jwtguard)
+  async getAppointmentList(@GetUser() user: Users) {
+    console.log('get a request appoitment');
+    await this.authService.validateRole(user.id, null);
+    return await this.userservice.getAppointment(user.id);
   }
 
   @Put('/appointments/:id')

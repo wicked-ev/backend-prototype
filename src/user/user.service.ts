@@ -461,8 +461,7 @@ export class UserService {
         orderBy: {
           createdAt: 'asc',
         },
-      }
-    );
+      });
       console.log('listofRecord', listOfRecords);
 
       if (!listOfRecords) {
@@ -490,8 +489,8 @@ export class UserService {
         );
         const minutesDiff: number = Math.floor(timeDiff / (1000 * 60));
         if (minutesDiff >= 5) {
-          console.log("manich nb3ath");
-          
+          console.log('manich nb3ath');
+
           return { message: null };
         } else {
           console.log('rani nb3ath');
@@ -502,7 +501,7 @@ export class UserService {
         throw new Error(`Error getting lastest record`);
       }
     } catch (error) {
-      return { message: null}
+      return { message: null };
       throw new Error(`Error getting list of records`);
     }
   }
@@ -703,16 +702,18 @@ export class UserService {
   }
   async getAppointment(DoctorId: number) {
     const DoctorIdAcc = await this.getAccount(DoctorId);
+    console.log('Doc Ac', DoctorIdAcc);
     try {
       const Appointments = await this.prisma.appointment.findMany({
         where: {
-          DoctorId: DoctorIdAcc.AccId,
+          PatientId: DoctorIdAcc.AccId,
         },
         orderBy: {
           AppointmentDate: 'asc',
         },
       });
       if (Appointments) {
+        console.log('appointment', Appointments);
         return Appointments;
       }
       if (!Appointments) {
