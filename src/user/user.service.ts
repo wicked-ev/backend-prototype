@@ -5,8 +5,14 @@ import { ActivateDeviceDto, NoteDto, RNPdto } from './dto/index';
 import { Users } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 //import { validate, IsNumber } from 'class-validator';
-import { UpdateDevice, UpNoteDto, UpPatient } from './dto/user.dto';
+import {
+  UpdateAppointment,
+  UpdateDevice,
+  UpNoteDto,
+  UpPatient,
+} from './dto/user.dto';
 import { Roles } from 'src/auth/enums';
+import { AppointmentState } from './enums';
 
 @Injectable()
 export class UserService {
@@ -675,5 +681,97 @@ export class UserService {
       console.error('Error deleting user:', error);
       return { message: 'An error occurred while deleting the user' };
     }
+  }
+  async createAppoinment(DoctorId: number, PatientId: number, DueDate: string) {
+    try {
+      const Appointment = await this.prisma.appointment.create({
+        data: {
+          PatientId: PatientId,
+          DoctorId: DoctorId,
+          AppointmentDate: new Date(DueDate),
+          AppState: AppointmentState.due,
+        },
+      });
+      if (Appointment) {
+        return { message: 'Appointment created successfully', Appointment };
+      }
+    } catch (error) {
+      throw new Error(`Error creating appoinment`);
+    }
+  }
+  async getAppointment(DoctorId: number) {
+    try {
+      const Appointments = await this.prisma.appointment.findMany({
+        where: {
+          DoctorId: DoctorId,
+        },
+        orderBy: {
+          AppointmentDate: 'asc',
+        },
+      });
+      if (Appointments) {
+        return Appointments;
+      }
+      if (!Appointments) {
+        return { message: 'Appointments not found', Appointments };
+      }
+    } catch (error) {
+      throw new Error(`Error retrieving appoinment`);
+    }
+  }
+  async updateAppointment(Aid: number, dto: Partial<UpdateAppointment>) {
+    try {
+      const appExist = await this.doseAppointmentsExist(Aid);
+      if (!appExist) {
+        throw new Error(`Appoinment not found`);
+      }
+      const updateAppointment = await this.prisma.appointment.update({
+        where: {
+          Aid: Aid,
+        },
+        data: {
+          AppointmentDate: new Date(dto.AppointmentDate),
+          AppState: dto.AppState,
+        },
+      });
+      if (updateAppointment) {
+        return {
+          message: 'appointment updated successfully',
+          updateAppointment,
+        };
+      }
+    } catch (erro) {
+      throw new Error(`Error updating appoinment`);
+    }
+  }
+
+  async deleteAppointment(Aid: number) {
+    try {
+      const appExist = await this.doseAppointmentsExist(Aid);
+      if (!appExist) {
+        throw new Error(`Appoinment not found`);
+      }
+      await this.prisma.appointment.delete({
+        where: {
+          Aid: Aid,
+        },
+      });
+      return { message: 'Appoinment deleted successfully' };
+    } catch (error) {
+      console.error('Error deleting appoinment:', error);
+      return { message: 'An error occurred while deleting the appoinment' };
+    }
+  }
+  async doseAppointmentsExist(Aid: number) {
+    try {
+      const Appointment = await this.prisma.appointment.findUnique({
+        where: {
+          Aid: Aid,
+        },
+      });
+      if (Appointment) {
+        return !!Appointment;
+      }
+    } catch (error) {}
   }
 }

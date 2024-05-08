@@ -152,3 +152,30 @@ export class UpdateDevice {
   @IsNotEmpty()
   NeWOwner: number;
 }
+export class newAppointment {
+  @IsNumber()
+  @IsNotEmpty()
+  PatientId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  DoctorId: number;
+
+  @IsString()
+  @IsNotEmpty()
+  AppointmentDate: string;
+}
+
+export class UpdateAppointment {
+  @IsNumber()
+  @IsNotEmpty()
+  DoctorId: number;
+
+  @IsString()
+  @IsOptional()
+  AppointmentDate: string;
+
+  @IsString()
+  @IsOptional()
+  AppState: string;
+}
