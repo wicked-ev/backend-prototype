@@ -94,11 +94,13 @@ model Notification {
 model Appointment {
   Aid Int @id @default(autoincrement())
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
   AppointmentDate DateTime @default(now())
-  patientsId Int?
-  patients accounts? @relation(name:"petients",fields: [patientsId], references: [AccId])
+  PatientId Int?
+  patients accounts? @relation(name:"petients",fields: [PatientId], references: [AccId])
   DoctorId Int?
   Doctor accounts? @relation(name:"doctor",fields: [DoctorId], references: [AccId])
+  AppState String
 }
 model Heart_Rate_Record {
   Rid      Int @id @default(autoincrement())
