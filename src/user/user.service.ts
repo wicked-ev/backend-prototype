@@ -670,11 +670,13 @@ export class UserService {
     }
   }
   async createAppoinment(DoctorId: number, PatientId: number, DueDate: string) {
+    const DoctorIdAcc = await this.getAccount(DoctorId);
+    const PatientIdAcc = await this.getAccount(PatientId);
     try {
       const Appointment = await this.prisma.appointment.create({
         data: {
-          PatientId: PatientId,
-          DoctorId: DoctorId,
+          PatientId: DoctorIdAcc.AccId,
+          DoctorId: PatientIdAcc.AccId,
           AppointmentDate: new Date(DueDate),
           AppState: AppointmentState.due,
         },
@@ -687,10 +689,11 @@ export class UserService {
     }
   }
   async getAppointment(DoctorId: number) {
+    const DoctorIdAcc = await this.getAccount(DoctorId);
     try {
       const Appointments = await this.prisma.appointment.findMany({
         where: {
-          DoctorId: DoctorId,
+          DoctorId: DoctorIdAcc.AccId,
         },
         orderBy: {
           AppointmentDate: 'asc',
