@@ -325,6 +325,7 @@ export class UserService {
           PreviewerAccountId: AccUser.AccId,
         },
       });
+      console.log(patientList);
       const List = [];
       for (let index = 0; index < patientList.length; index++) {
         const Pid: number = patientList[index].PreviewedAccountId;
@@ -340,6 +341,7 @@ export class UserService {
         data['users'] = { user, device };
         List.push(data);
       }
+      console.log('done');
       return List;
     } catch (err) {
       console.error('Error in GetpatientLists:', err);
@@ -444,15 +446,19 @@ export class UserService {
   }
   async getLastestHeartRate(patientId: number, time: string) {
     const patientAcc = await this.getAccount(patientId);
+    console.log('patient', patientAcc);
     try {
       const listOfRecords = await this.prisma.userListRecords.findMany({
         where: {
-          User: patientAcc.AccId,
+          User: patientAcc.AccountOwner,
         },
         orderBy: {
           createdAt: 'asc',
         },
-      });
+      }
+    );
+      console.log('listofRecord', listOfRecords);
+
       if (!listOfRecords) {
         return { message: 'records not found' };
       }
@@ -470,20 +476,27 @@ export class UserService {
         if (!lastrecord) {
           return { message: 'no values found in record' };
         }
+        console.log('record:', lastrecord);
         const timestamp = new Date(time);
+        console.log('timestamp', timestamp);
         const timeDiff: number = Math.abs(
           lastrecord.timeStamp.getTime() - timestamp.getTime(),
         );
         const minutesDiff: number = Math.floor(timeDiff / (1000 * 60));
         if (minutesDiff >= 5) {
+          console.log("manich nb3ath");
+          
           return { message: null };
         } else {
+          console.log('rani nb3ath');
+
           return { lastrecord };
         }
       } catch (error) {
         throw new Error(`Error getting lastest record`);
       }
     } catch (error) {
+      return { message: null}
       throw new Error(`Error getting list of records`);
     }
   }
