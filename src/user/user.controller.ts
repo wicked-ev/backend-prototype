@@ -25,6 +25,8 @@ import {
   userid,
   HeartRate,
   currnetTime,
+  newAppointment,
+  UpdateAppointment,
 } from './dto';
 //if you want to test the jwt guard just uncommnet the line below
 //@UseGuards(jwtguard)
@@ -161,5 +163,44 @@ export class UserController {
     const parsedNoteId =
       typeof NoteId === 'string' ? parseInt(NoteId, 10) : NoteId;
     return this.userservice.DeleteNote(parsedNoteId);
+  }
+  // appointment
+  @Post('/appointments/')
+  async createAppointment(@Body() dto: newAppointment) {
+    await this.authService.validateRole(dto.DoctorId, dto.PatientId);
+    return await this.userservice.createAppoinment(
+      dto.DoctorId,
+      dto.PatientId,
+      dto.AppointmentDate,
+    );
+  }
+  @Get('/appointments/:id')
+  async getAppointmentList(@Param('id') dto: userid) {
+    const parsedUserId =
+      typeof dto.UserId === 'string' ? parseInt(dto.UserId, 10) : dto.UserId;
+    await this.authService.validateRole(parsedUserId, null);
+    return await this.userservice.getAppointment(parsedUserId);
+  }
+
+  @Put('/appointments/:id')
+  async updateAppointment(
+    @Param('id') AppointmentId: number,
+    @Body() dto: Partial<UpdateAppointment>,
+  ) {
+    const parsedAppointmentId =
+      typeof AppointmentId === 'string'
+        ? parseInt(AppointmentId, 10)
+        : AppointmentId;
+    await this.authService.validateRole(dto.DoctorId, null);
+    return await this.userservice.updateAppointment(parsedAppointmentId, dto);
+  }
+
+  @Delete('/appointments/:id')
+  async deleteAppointment(@Param('id') AppointmentId: number) {
+    const parsedAppointmentId =
+      typeof AppointmentId === 'string'
+        ? parseInt(AppointmentId, 10)
+        : AppointmentId;
+    return await this.userservice.deleteAppointment(parsedAppointmentId);
   }
 }
