@@ -687,8 +687,8 @@ export class UserService {
     try {
       const Appointment = await this.prisma.appointment.create({
         data: {
-          PatientId: DoctorIdAcc.AccId,
-          DoctorId: PatientIdAcc.AccId,
+          PatientId: PatientIdAcc.AccId,
+          DoctorId: DoctorIdAcc.AccId,
           AppointmentDate: new Date(DueDate),
           AppState: AppointmentState.due,
         },
@@ -706,15 +706,46 @@ export class UserService {
     try {
       const Appointments = await this.prisma.appointment.findMany({
         where: {
-          PatientId: DoctorIdAcc.AccId,
+          DoctorId: DoctorIdAcc.AccId,
         },
         orderBy: {
           AppointmentDate: 'asc',
         },
       });
-      if (Appointments) {
-        console.log('appointment', Appointments);
-        return Appointments;
+      if (Appointments && Appointments.length > 0) {
+        try {
+          const AppoinmentfullList = [];
+          const appointmentDetails = await Promise.all(
+            Appointments.map(async (Appoinment, index) => {
+              const Appoinmentfull = await this.prisma.accounts.findUnique({
+                where: {
+                  AccId: Appoinment.PatientId, // Ensure correct field reference
+                },
+              });
+
+              if (Appoinmentfull) {
+                return { ...Appoinment, ...Appoinmentfull }; // Combine data and return
+              } else {
+                // Handle case where appointment has no associated patient account
+                return null; // Or handle differently if needed
+              }
+            }),
+          );
+
+          // Filter out any null values from appointmentDetails
+          const filteredDetails = appointmentDetails.filter((detail) => detail);
+          AppoinmentfullList.push(...filteredDetails); // Spread filtered results
+
+          if (AppoinmentfullList.length > 0) {
+            console.log('appointments', AppoinmentfullList);
+            return AppoinmentfullList;
+          } else {
+            // Handle case where appointments are found but no matching patient accounts
+            return { message: 'No patient accounts found for appointments' };
+          }
+        } catch (error) {
+          throw new Error(`Error retrieving appoinment`);
+        }
       }
       if (!Appointments) {
         return { message: 'Appointments not found', Appointments };
