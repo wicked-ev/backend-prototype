@@ -179,3 +179,16 @@ export class UpdateAppointment {
   @IsOptional()
   AppState: string;
 }
+
+export class UpNotification {
+  @IsNumber()
+  @IsNotEmpty()
+  UserId: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  NotfiId: number;
+
+  @IsNotEmpty()
+  isRead: boolean;
+}
