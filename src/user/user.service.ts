@@ -461,8 +461,7 @@ export class UserService {
         orderBy: {
           createdAt: 'asc',
         },
-      }
-    );
+      });
       console.log('listofRecord', listOfRecords);
 
       if (!listOfRecords) {
@@ -490,8 +489,8 @@ export class UserService {
         );
         const minutesDiff: number = Math.floor(timeDiff / (1000 * 60));
         if (minutesDiff >= 5) {
-          console.log("manich nb3ath");
-          
+          console.log('manich nb3ath');
+
           return { message: null };
         } else {
           console.log('rani nb3ath');
@@ -502,7 +501,7 @@ export class UserService {
         throw new Error(`Error getting lastest record`);
       }
     } catch (error) {
-      return { message: null}
+      return { message: null };
       throw new Error(`Error getting list of records`);
     }
   }
@@ -776,5 +775,35 @@ export class UserService {
         return !!Appointment;
       }
     } catch (error) {}
+  }
+
+  async getNotifByUserId(UserId: number) {
+    const UserAccId = (await this.getAccount(UserId)).AccId;
+    try {
+      const Notifcations = await this.prisma.notification.findMany({
+        where: {
+          UserAccid: UserAccId,
+        },
+      });
+      return Notifcations;
+    } catch (error) {
+      throw new Error(`error while getting List ${error}`);
+    }
+  }
+  async updateNotification(isRead: boolean, UserId: number, NotifId: number) {
+    const UserAccId = (await this.getAccount(UserId)).AccId;
+    try {
+      await this.prisma.notification.update({
+        where: {
+          Notid: NotifId,
+          UserAccid: UserAccId,
+        },
+        data: {
+          isRead: isRead,
+        },
+      });
+    } catch (error) {
+      throw new Error(`error updating notifcation${error}`);
+    }
   }
 }
