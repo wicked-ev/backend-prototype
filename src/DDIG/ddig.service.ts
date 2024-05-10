@@ -1,16 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserService } from '../user/user.service';
 import { DDIGDto, ReceivedDataDto } from './dto/DDIG.dto';
 import { ConfigService } from '@nestjs/config';
 import { connect, IClientOptions } from 'mqtt';
-import { log } from 'console';
+// import { log } from 'console';
+// import { userid } from '../user/dto/user.dto';
+// import { IsNumber } from 'class-validator';
 
 @Injectable()
 export class DdigService {
   private BrokerUrl: string;
   private MaxRate: number = 0;
   private MinRate: number = 0;
+  private listofpreviwers: any;
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
@@ -66,7 +69,11 @@ export class DdigService {
     const userConstraints = await this.getUserRateConstraints(device.ownerID);
     this.MinRate = userConstraints.MinRate;
     this.MaxRate = userConstraints.MaxRate;
+
     const topic = await this.CreateTopic(dto.sid, device.ownerID);
+    const userAcc = (await this.userservice.getAccount(devicerecord.User))
+      .AccId;
+    this.listofpreviwers = this.getPatientPreviewer(userAcc);
     this.connection(topic, device.ownerID, dto.sid, devicerecord);
     return { Topic: topic, permissions: true };
   }
@@ -179,17 +186,66 @@ export class DdigService {
       throw new Error(`error getting Previewers`);
     }
   }
-  async ProcessTodb(data: ReceivedDataDto, devicerecord: any) {
-    if (data.beat >= this.MaxRate) {
-      console.log('Max Rate Reached');
+  async createNotification(
+    UserAccId: number,
+    PatientAccid: number,
+    context: string,
+  ) {
+    try {
+      await this.prisma.notification.create({
+        data: {
+          UserAccid: UserAccId,
+          PatientAccid: PatientAccid,
+          isRead: false,
+          context: context,
+        },
+      });
+    } catch (error) {
+      Logger.log(`error creating notification ${error}`);
     }
-    if (data.beat <= this.MinRate) {
-      console.log('Min Rate Reached');
+  }
+  async getlistofPreviwers(UserId: number) {
+    const UserAccId = (await this.userservice.getAccount(UserId)).AccId;
+    try {
+      const previwerList = await this.prisma.previewerList.findMany({
+        where: {
+          PreviewedAccountId: UserAccId,
+        },
+      });
+      return previwerList;
+    } catch (error) {
+      Logger.log(`error while getting list${error}`);
+    }
+  }
+  async createNotifcatinosForList(context: string, list: any) {
+    for (let index = 0; index < list.length; index++) {
+      this.createNotification(
+        list.PreviewerAccountId,
+        list.PreviewedAccountId,
+        context,
+      );
+    }
+  }
+  async ProcessTodb(data: ReceivedDataDto, devicerecord: any) {
+    if (this.listofpreviwers) {
+      if (data.beat >= this.MaxRate) {
+        console.log('Max Rate Reached');
+        await this.createNotifcatinosForList(
+          'Maximum Heart Rate constraints Has Been Reached',
+          this.listofpreviwers,
+        );
+      }
+      if (data.beat <= this.MinRate) {
+        console.log('Min Rate Reached');
+        await this.createNotifcatinosForList(
+          'Minimum Heart Rate constraints Has Been Reached',
+          this.listofpreviwers,
+        );
+      }
     }
     try {
       console.log('device record', devicerecord);
-      console.log("data ", data);
-      
+      console.log('data', data);
       await this.prisma.heart_Rate_Record.create({
         data: {
           ULRid: devicerecord.ULRid,
