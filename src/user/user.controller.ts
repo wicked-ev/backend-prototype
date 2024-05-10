@@ -27,6 +27,7 @@ import {
   currnetTime,
   newAppointment,
   UpdateAppointment,
+  UpNotification,
 } from './dto';
 //if you want to test the jwt guard just uncommnet the line below
 //@UseGuards(jwtguard)
@@ -131,7 +132,7 @@ export class UserController {
     console.log('actual date', formattedDate.toString());
     return await this.userservice.getLastestHeartRate(
       parsedPatientId,
-      formattedDate ,
+      formattedDate,
     );
     //  Math.floor(Math.random() * (90 - 50 + 1)) + 50;
   }
@@ -208,5 +209,23 @@ export class UserController {
         ? parseInt(AppointmentId, 10)
         : AppointmentId;
     return await this.userservice.deleteAppointment(parsedAppointmentId);
+  }
+  //notifcation
+  @Get('/notification/:id')
+  async getNotification(@Param('id') UserId: number) {
+    const parsedUserid =
+      typeof UserId === 'string' ? parseInt(UserId, 10) : UserId;
+    await this.authService.validateRole(parsedUserid, null);
+    return await this.userservice.getNotifByUserId(parsedUserid);
+  }
+
+  @Put('/notification')
+  async updateNotification(@Body() dto: UpNotification) {
+    await this.authService.validateRole(dto.UserId, null);
+    return await this.userservice.updateNotification(
+      dto.isRead,
+      dto.UserId,
+      dto.NotfiId,
+    );
   }
 }
