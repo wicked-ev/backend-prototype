@@ -70,7 +70,8 @@ model accounts {
   sentPreviewRequest PreviewerList[] @relation("PreReq")
   appointment Appointment[] @relation("petients")
   DocAppointmentDocs Appointment[] @relation("doctor")
-  Notifications Notification[]
+  Notifications Notification[] @relation("docNotif")
+  NotifcationsAlrt Notification[] @relation("patientNotif")
 }
 model PreviewerList {
   id Int @id @default(autoincrement())
@@ -85,10 +86,12 @@ model Notification {
   Notid Int @id @default(autoincrement())
   createdAt DateTime @default(now())
   UserAccid Int?
-  notifDate DateTime @default(now())
-  useracc accounts? @relation(fields: [UserAccid], references: [AccId])
-  Petients String
+  //notifDate DateTime @default(now())
+  useracc accounts? @relation( name: "docNotif",fields: [UserAccid], references: [AccId])
+  PatientAccid Int?
+  patientAcc accounts? @relation(name:"patientNotif",fields: [PatientAccid], references: [AccId])
   context String 
+  isRead Boolean?
 }
 
 model Appointment {
