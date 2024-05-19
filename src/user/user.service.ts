@@ -285,7 +285,7 @@ export class UserService {
           Nid: true,
           NoteSub: true,
           NoteMain: true,
-          createAt:true
+          createAt: true,
         },
       });
       if (!listOfNotes) {
@@ -812,6 +812,7 @@ export class UserService {
   }
 
   async getNotifByUserId(UserId: number) {
+    console.log('trying to get notification');
     const UserAccId = (await this.getAccount(UserId)).AccId;
     try {
       const Notifcations = await this.prisma.notification.findMany({
@@ -819,6 +820,7 @@ export class UserService {
           UserAccid: UserAccId,
         },
       });
+      console.log('notification', Notifcations);
       return Notifcations;
     } catch (error) {
       throw new Error(`error while getting List ${error}`);

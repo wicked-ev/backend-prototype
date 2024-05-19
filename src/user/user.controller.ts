@@ -73,7 +73,8 @@ export class UserController {
   //patients
   @Post('/patients')
   async createPatient(@Body() dto: RNPdto) {
-    await this.authService.validateRole(dto.Userid);
+    console.log(dto);
+    await this.authService.validateRole(dto.Userid, null);
     return await this.userservice.RegisterNewPatients(dto);
   }
 
@@ -223,9 +224,11 @@ export class UserController {
   //notifcation
   @Get('/notification/:id')
   async getNotification(@Param('id') UserId: number) {
+    console.log('get notificaion req');
     const parsedUserid =
       typeof UserId === 'string' ? parseInt(UserId, 10) : UserId;
     await this.authService.validateRole(parsedUserid, null);
+    
     return await this.userservice.getNotifByUserId(parsedUserid);
   }
 
