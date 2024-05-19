@@ -4,6 +4,7 @@ import { UserService } from '../user/user.service';
 import { DDIGDto, ReceivedDataDto } from './dto/DDIG.dto';
 import { ConfigService } from '@nestjs/config';
 import { connect, IClientOptions } from 'mqtt';
+//import { time } from 'console';
 // import { log } from 'console';
 // import { userid } from '../user/dto/user.dto';
 // import { IsNumber } from 'class-validator';
@@ -14,6 +15,13 @@ export class DdigService {
   private MaxRate: number = 0;
   private MinRate: number = 0;
   private listofpreviwers: any;
+  private listofHR: number[];
+  private dataList = {
+    listofHR: [],
+    listofIR: [],
+    listofRed: [],
+    //listofTime: [],
+  };
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
@@ -151,6 +159,16 @@ export class DdigService {
       this.ProcessTodb(data, devicerecord);
     });
   }
+  calculateMedian(values: number[]): number {
+    const sortedValues = [...values].sort((a, b) => a - b);
+    const midIndex = Math.floor(sortedValues.length / 2);
+
+    if (sortedValues.length % 2 === 0) {
+      return (sortedValues[midIndex - 1] + sortedValues[midIndex]) / 2;
+    } else {
+      return sortedValues[midIndex];
+    }
+  }
   SetMediandata(Databuffer: Array<number>, data: object) {
     Databuffer.every((value) => {
       return (value = value / 5);
@@ -227,38 +245,53 @@ export class DdigService {
     }
   }
   async ProcessTodb(data: ReceivedDataDto, devicerecord: any) {
-    if (this.listofpreviwers) {
-      if (data.beat >= this.MaxRate) {
-        console.log('Max Rate Reached');
-        await this.createNotifcatinosForList(
-          'Maximum Heart Rate constraints Has Been Reached',
-          this.listofpreviwers,
-        );
+    if (this.dataList.listofHR.length < 50) {
+      this.dataList.listofHR.push(data.beat);
+      this.dataList.listofIR.push(data.ir_Reading);
+      this.dataList.listofRed.push(data.redReading);
+    } else if (this.dataList.listofHR.length == 50) {
+      const medianHR = this.calculateMedian(this.dataList.listofHR);
+      const medianIR = this.calculateMedian(this.dataList.listofIR);
+      const medianRed = this.calculateMedian(this.dataList.listofRed);
+      if (this.listofpreviwers) {
+        if (medianHR >= this.MaxRate) {
+          console.log('Max Rate Reached');
+          await this.createNotifcatinosForList(
+            'Maximum Heart Rate constraints Has Been Reached',
+            this.listofpreviwers,
+          );
+        }
+        if (medianHR <= this.MinRate) {
+          console.log('Min Rate Reached');
+          await this.createNotifcatinosForList(
+            'Minimum Heart Rate constraints Has Been Reached',
+            this.listofpreviwers,
+          );
+        }
       }
-      if (data.beat <= this.MinRate) {
-        console.log('Min Rate Reached');
-        await this.createNotifcatinosForList(
-          'Minimum Heart Rate constraints Has Been Reached',
-          this.listofpreviwers,
-        );
+      try {
+        console.log('device record', devicerecord);
+        console.log('data', data);
+        console.log('medianHR', medianHR);
+        console.log('medianIR', medianIR);
+        console.log('medianRed', medianRed);
+        await this.prisma.heart_Rate_Record.create({
+          data: {
+            ULRid: devicerecord.ULRid,
+            ir_Reading: medianIR,
+            redReading: medianRed,
+            beat: medianHR,
+            timeStamp: new Date(),
+          },
+        });
+        this.dataList.listofHR = [];
+        this.dataList.listofIR = [];
+        this.dataList.listofRed = [];
+      } catch (err) {
+        //this is just error handling while testing it should be removed in production
+        console.log(err);
+        throw new Error('cant not Process data to database');
       }
-    }
-    try {
-      console.log('device record', devicerecord);
-      console.log('data', data);
-      await this.prisma.heart_Rate_Record.create({
-        data: {
-          ULRid: devicerecord.ULRid,
-          ir_Reading: data.ir_Reading,
-          redReading: data.redReading,
-          beat: data.beat,
-          timeStamp: data.timeStamp,
-        },
-      });
-    } catch (err) {
-      //this is just error handling while testing it should be removed in production
-      console.log(err);
-      throw new Error('cant not Process data to database');
     }
   }
   CreateMqttOption(DeviceOwnerID: number) {
