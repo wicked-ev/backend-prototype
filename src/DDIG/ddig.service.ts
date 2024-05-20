@@ -273,6 +273,7 @@ export class DdigService {
             'Maximum Heart Rate constraints Has Been Reached',
             this.listofpreviwers,
           );
+          this.lastNotificationTime = new Date();
         }
         if (medianHR <= this.MinRate) {
           console.log('Min Rate Reached');
@@ -280,6 +281,7 @@ export class DdigService {
             'Minimum Heart Rate constraints Has Been Reached',
             this.listofpreviwers,
           );
+          this.lastNotificationTime = new Date();
         }
       }
       try {
