@@ -93,7 +93,7 @@ export class UserController {
     console.log('user', user.id);
     return await this.userservice.GetpatientLists(user.id);
   }
-  @Get('/patient')
+  @Post('/patient')
   async getPatient(@Body() dto: userid) {
     await this.authService.validateRole(null, null, dto.UserId);
     return await this.userservice.GetPatients();
