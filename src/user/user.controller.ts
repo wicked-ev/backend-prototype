@@ -16,6 +16,7 @@ import { jwtguard } from 'src/auth/guard';
 import { UserService } from './user.service';
 //import { UpdateDevice } from './dto/user.dto';
 import { AuthService } from '../auth/auth.service';
+import { validateRole } from '../auth/dto/Auth.dto';
 import {
   ActivateDeviceDto,
   RNPdto,
@@ -30,6 +31,7 @@ import {
   UpNotification,
   newDevice,
 } from './dto';
+import { Roles } from 'src/auth/enums';
 //if you want to test the jwt guard just uncommnet the line below
 //@UseGuards(jwtguard)
 @Controller('user')
@@ -103,6 +105,11 @@ export class UserController {
     await this.authService.validateRole(null, null, dto.UserId);
     return await this.userservice.GetPatients();
   }
+  @Post('/doctors')
+  async getDoctors(@Body() dto: userid) {
+    await this.authService.validateRole(null, null, dto.UserId);
+    return await this.userservice.GetDoctors();
+  }
   @Put('/patients/:id')
   async updatePatient(
     @Param('id') userId: number,
@@ -134,8 +141,12 @@ export class UserController {
     const parsedUserId =
       typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
     await this.authService.validateRole(null, null, dto.UserId);
+    if ((await this.userservice.getRole(parsedUserId)) === Roles.Admin) {
+      throw new Error("admin can't delete a admin");
+    }
     return await this.userservice.DeleteUser(parsedUserId);
   }
+
   @Get('/patients/:id/heartrates/')
   async getHeartbeat(@Param('id') PatientId: number, @Body() dto: HeartRate) {
     const parsedPatientId =
