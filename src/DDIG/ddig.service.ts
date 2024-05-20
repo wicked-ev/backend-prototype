@@ -81,7 +81,7 @@ export class DdigService {
     const topic = await this.CreateTopic(dto.sid, device.ownerID);
     const userAcc = (await this.userservice.getAccount(devicerecord.User))
       .AccId;
-    this.listofpreviwers = this.getPatientPreviewer(userAcc);
+    this.listofpreviwers = await this.getPatientPreviewer(userAcc);
     this.connection(topic, device.ownerID, dto.sid, devicerecord);
     return { Topic: topic, permissions: true };
   }
@@ -237,7 +237,7 @@ export class DdigService {
   }
   async createNotifcatinosForList(context: string, list: any) {
     for (let index = 0; index < list.length; index++) {
-      this.createNotification(
+      await this.createNotification(
         list.PreviewerAccountId,
         list.PreviewedAccountId,
         context,
