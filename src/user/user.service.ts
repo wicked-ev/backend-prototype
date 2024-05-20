@@ -589,6 +589,18 @@ export class UserService {
       throw new Error(`Error updating note: ${err.message}`);
     }
   }
+  async GetPatients() {
+    try {
+      const patients = await this.prisma.users.findMany({
+        where: {
+          Role: Roles.Patient,
+        },
+      });
+      return patients;
+    } catch (error) {
+      throw new Error(`Error while getting patients`);
+    }
+  }
   async RegisterNewDevice(dto: newDevice) {
     try {
       const device = await this.DoseDeviceExist(dto.Sid);
