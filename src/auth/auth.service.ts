@@ -95,7 +95,7 @@ export class AuthService {
   //   return user;
   // }
 
-  async validateRole(DoctorId?: number, PatientId?: number) {
+  async validateRole(DoctorId?: number, PatientId?: number, adminId?: number) {
     try {
       console.log('validating role');
       console.log(DoctorId);
@@ -127,6 +127,19 @@ export class AuthService {
           },
         });
         if (patient.Role != Roles.Patient) {
+          throw new Error('Access denied');
+        }
+      }
+      if (adminId != null && adminId != undefined) {
+        console.log('Patient null we should be here');
+        // const parsedUserId =
+        //   typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
+        const Admin = await this.prisma.users.findUnique({
+          where: {
+            id: adminId,
+          },
+        });
+        if (Admin.Role != Roles.Admin) {
           throw new Error('Access denied');
         }
       }

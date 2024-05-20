@@ -28,6 +28,7 @@ import {
   newAppointment,
   UpdateAppointment,
   UpNotification,
+  newDevice,
 } from './dto';
 //if you want to test the jwt guard just uncommnet the line below
 //@UseGuards(jwtguard)
@@ -70,6 +71,12 @@ export class UserController {
     return await this.userservice.DeleteDevice(parsedDevice);
   }
 
+  @Post('/device/')
+  async createDevice(@Body() dto: newDevice) {
+    await this.authService.validateRole(null, null, dto.Userid);
+    return await this.userservice.RegisterNewDevice(dto);
+  }
+
   //patients
   @Post('/patients')
   async createPatient(@Body() dto: RNPdto) {
@@ -110,7 +117,15 @@ export class UserController {
       dto.UserId,
     );
   }
-  //not tested yet
+  @Delete('/:id') async deletePatient(
+    @Param('id') PatientId: number,
+    @Body() dto: userid,
+  ) {
+    const parsedUserId =
+      typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
+    await this.authService.validateRole(null, null, dto.UserId);
+    return await this.userservice.DeleteUser(parsedUserId);
+  }
   @Get('/patients/:id/heartrates/')
   async getHeartbeat(@Param('id') PatientId: number, @Body() dto: HeartRate) {
     const parsedPatientId =
@@ -228,7 +243,6 @@ export class UserController {
     const parsedUserid =
       typeof UserId === 'string' ? parseInt(UserId, 10) : UserId;
     await this.authService.validateRole(parsedUserid, null);
-    
     return await this.userservice.getNotifByUserId(parsedUserid);
   }
 

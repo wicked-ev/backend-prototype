@@ -6,6 +6,7 @@ import { Users } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 //import { validate, IsNumber } from 'class-validator';
 import {
+  newDevice,
   UpdateAppointment,
   UpdateDevice,
   UpNoteDto,
@@ -588,7 +589,23 @@ export class UserService {
       throw new Error(`Error updating note: ${err.message}`);
     }
   }
-
+  async RegisterNewDevice(dto: newDevice) {
+    try {
+      const device = await this.DoseDeviceExist(dto.Sid);
+      if (device) {
+        throw new Error('Device with this Sid already exist');
+      }
+      const newDevice = await this.prisma.device.create({
+        data: {
+          Sid: dto.Sid,
+          activateCode: dto.ActivationCode,
+        },
+      });
+      return { message: 'device created successfully', newDevice };
+    } catch (error) {
+      throw new Error('error while creating new device');
+    }
+  }
   async DeleteDevice(DeviceId: number) {
     try {
       const device = await this.DoseDeviceExist(DeviceId);
