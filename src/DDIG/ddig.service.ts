@@ -237,23 +237,29 @@ export class DdigService {
   }
   async createNotifcatinosForList(context: string, list: any) {
     for (let index = 0; index < list.length; index++) {
+      console.log('we create notification for', list[index]);
       await this.createNotification(
-        list.PreviewerAccountId,
-        list.PreviewedAccountId,
+        list[index].PreviewerAccountId,
+        list[index].PreviewedAccountId,
         context,
       );
+      console.log('notification created');
     }
   }
   async ProcessTodb(data: ReceivedDataDto, devicerecord: any) {
     if (this.dataList.listofHR.length < 50) {
+      console.log('we have less than 50 items');
       this.dataList.listofHR.push(data.beat);
       this.dataList.listofIR.push(data.ir_Reading);
       this.dataList.listofRed.push(data.redReading);
     } else if (this.dataList.listofHR.length == 50) {
+      console.log('we have 50 items boys');
       const medianHR = this.calculateMedian(this.dataList.listofHR);
       const medianIR = this.calculateMedian(this.dataList.listofIR);
       const medianRed = this.calculateMedian(this.dataList.listofRed);
+      console.log('list of previwers is here:', this.listofpreviwers);
       if (this.listofpreviwers) {
+        console.log('HR', medianHR);
         if (medianHR >= this.MaxRate) {
           console.log('Max Rate Reached');
           await this.createNotifcatinosForList(
