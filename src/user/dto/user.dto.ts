@@ -179,7 +179,18 @@ export class UpdateAppointment {
   @IsOptional()
   AppState: string;
 }
+export class newDevice {
+  @IsNumber()
+  @IsNotEmpty()
+  Sid: number;
+  @IsNumber()
+  @IsNotEmpty()
+  ActivationCode: number;
 
+  @IsNumber()
+  @IsNotEmpty()
+  Userid: number;
+}
 export class UpNotification {
   @IsNumber()
   @IsNotEmpty()
