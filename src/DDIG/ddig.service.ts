@@ -22,6 +22,8 @@ export class DdigService {
     listofRed: [],
     //listofTime: [],
   };
+  private lastNotificationTime: Date | null = null;
+  private readonly notificationCooldown = 5 * 60 * 1000;
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
@@ -259,7 +261,11 @@ export class DdigService {
       const medianIR = this.calculateMedian(this.dataList.listofIR);
       const medianRed = this.calculateMedian(this.dataList.listofRed);
       console.log('list of previwers is here:', this.listofpreviwers);
-      if (this.listofpreviwers) {
+      const now = new Date().getTime();
+      const canNotify =
+        !this.lastNotificationTime ||
+        now - this.lastNotificationTime.getTime() >= this.notificationCooldown;
+      if (this.listofpreviwers && canNotify) {
         console.log('HR', medianHR);
         if (medianHR >= this.MaxRate) {
           console.log('Max Rate Reached');
