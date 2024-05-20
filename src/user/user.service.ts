@@ -14,6 +14,7 @@ import {
 } from './dto/user.dto';
 import { Roles } from 'src/auth/enums';
 import { AppointmentState } from './enums';
+import { userid } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -587,6 +588,30 @@ export class UserService {
       return note;
     } catch (err) {
       throw new Error(`Error updating note: ${err.message}`);
+    }
+  }
+  async getRole(userid: number) {
+    try {
+      const user = await this.prisma.users.findUnique({
+        where: {
+          id: userid,
+        },
+      });
+      return user.Role;
+    } catch (error) {
+      throw new Error(`Error while getting user role`);
+    }
+  }
+  async GetDoctors() {
+    try {
+      const doctors = await this.prisma.users.findMany({
+        where: {
+          Role: Roles.Doctor,
+        },
+      });
+      return doctors;
+    } catch (error) {
+      throw new Error(`Error while getting doctors`);
     }
   }
   async GetPatients() {
