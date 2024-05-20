@@ -131,7 +131,6 @@ export class AuthService {
         }
       }
       if (adminId != null && adminId != undefined) {
-        console.log('Patient null we should be here');
         // const parsedUserId =
         //   typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
         const Admin = await this.prisma.users.findUnique({
