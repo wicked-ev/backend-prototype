@@ -65,9 +65,10 @@ export class UserController {
     return await this.userservice.DeActivateDevice(parsedDevice, dto.UserId);
   }
   @Delete('/devices/:id')
-  async DeleteDevice(@Param('id') DeviceSid: number) {
+  async DeleteDevice(@Param('id') DeviceSid: number, @Body() dto: userid) {
     const parsedDevice =
       typeof DeviceSid === 'string' ? parseInt(DeviceSid, 10) : DeviceSid;
+    await this.authService.validateRole(null, null, dto.UserId);
     return await this.userservice.DeleteDevice(parsedDevice);
   }
 
@@ -92,7 +93,11 @@ export class UserController {
     console.log('user', user.id);
     return await this.userservice.GetpatientLists(user.id);
   }
-
+  @Get('/patient')
+  async getPatient(@Body() dto: userid) {
+    await this.authService.validateRole(null, null, dto.UserId);
+    return await this.userservice.GetPatients();
+  }
   @Put('/patients/:id')
   async updatePatient(
     @Param('id') userId: number,
