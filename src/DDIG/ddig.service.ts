@@ -77,11 +77,11 @@ export class DdigService {
     const userConstraints = await this.getUserRateConstraints(device.ownerID);
     this.MinRate = userConstraints.MinRate;
     this.MaxRate = userConstraints.MaxRate;
-
+    console.log('user rate constraints', userConstraints);
     const topic = await this.CreateTopic(dto.sid, device.ownerID);
-    const userAcc = (await this.userservice.getAccount(devicerecord.User))
-      .AccId;
-    this.listofpreviwers = await this.getPatientPreviewer(userAcc);
+    // const userAcc = (await this.userservice.getAccount(devicerecord.User))
+    //   .AccId;
+    this.listofpreviwers = await this.getPatientPreviewer(devicerecord.User);
     this.connection(topic, device.ownerID, dto.sid, devicerecord);
     return { Topic: topic, permissions: true };
   }
@@ -200,6 +200,7 @@ export class DdigService {
           PreviewedAccountId: PatientAcc.AccId,
         },
       });
+      return PreviewerList;
     } catch (error) {
       throw new Error(`error getting Previewers`);
     }
