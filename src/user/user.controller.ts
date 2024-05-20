@@ -50,7 +50,7 @@ export class UserController {
     await this.authService.validateRole(dto.ActivatorId, dto.Userid);
     return await this.userservice.ActivateDevice(dto);
   }
-  @Post('/devices')
+  @Post('/devices/all')
   async getAllDevices(@Body() dto: userid) {
     await this.authService.validateRole(null, null, dto.UserId);
     return await this.userservice.GetAllDevices();
