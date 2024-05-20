@@ -601,6 +601,14 @@ export class UserService {
       throw new Error(`Error while getting patients`);
     }
   }
+  async GetAllDevices() {
+    try {
+      const devices = await this.prisma.device.findMany();
+      return devices;
+    } catch (error) {
+      throw new Error(`Error while getting devices`);
+    }
+  }
   async RegisterNewDevice(dto: newDevice) {
     try {
       const device = await this.DoseDeviceExist(dto.Sid);
