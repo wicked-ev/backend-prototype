@@ -700,14 +700,29 @@ export class UserService {
           PatientAccid: account.AccId,
         },
       });
+      await this.prisma.notification.deleteMany({
+        where: {
+          UserAccid: account.AccId,
+        },
+      });
       await this.prisma.notes.deleteMany({
+        where: {
+          PatientId: account.AccId,
+        },
+      });
+      await this.prisma.notes.deleteMany({
+        where: {
+          AuthorId: account.AccId,
+        },
+      });
+      await this.prisma.appointment.deleteMany({
         where: {
           PatientId: account.AccId,
         },
       });
       await this.prisma.appointment.deleteMany({
         where: {
-          PatientId: account.AccId,
+          DoctorId: account.AccId,
         },
       });
       await this.prisma.userListRecords.deleteMany({
@@ -718,6 +733,11 @@ export class UserService {
       await this.prisma.previewerList.deleteMany({
         where: {
           PreviewerAccountId: account.AccId,
+        },
+      });
+      await this.prisma.previewerList.deleteMany({
+        where: {
+          PreviewedAccountId: account.AccId,
         },
       });
       await this.prisma.accounts.delete({
