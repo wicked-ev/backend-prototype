@@ -49,7 +49,7 @@ export class UserController {
   //devices
   @Post('/devices')
   async ActivateDecvice(@Body() dto: ActivateDeviceDto) {
-    await this.authService.validateRole(dto.ActivatorId, dto.Userid);
+    await this.authService.validateRole(dto.ActivatorId, dto.Userid, null);
     return await this.userservice.ActivateDevice(dto);
   }
   @Post('/devices/all')
@@ -68,7 +68,7 @@ export class UserController {
   async DesActviateDevice(@Param('id') deviceSid: number, @Body() dto: userid) {
     const parsedDevice =
       typeof deviceSid === 'string' ? parseInt(deviceSid, 10) : deviceSid;
-    await this.authService.validateRole(dto.UserId, null);
+    await this.authService.validateRole(dto.UserId, null, null);
     return await this.userservice.DeActivateDevice(parsedDevice, dto.UserId);
   }
   @Delete('/devices/:id')
@@ -89,14 +89,14 @@ export class UserController {
   @Post('/patients')
   async createPatient(@Body() dto: RNPdto) {
     console.log(dto);
-    await this.authService.validateRole(dto.Userid, null);
+    await this.authService.validateRole(dto.Userid, null, null);
     return await this.userservice.RegisterNewPatients(dto);
   }
 
   @Get('/patients')
   @UseGuards(jwtguard)
   async getPatientList(@GetUser() user: Users) {
-    await this.authService.validateRole(user.id, null);
+    await this.authService.validateRole(user.id, null, null);
     console.log('user', user.id);
     return await this.userservice.GetpatientLists(user.id);
   }
@@ -117,7 +117,7 @@ export class UserController {
   ) {
     const parsedUserId =
       typeof userId === 'string' ? parseInt(userId, 10) : userId;
-    await this.authService.validateRole(null, parsedUserId);
+    await this.authService.validateRole(null, parsedUserId, null);
     return await this.userservice.Updatepatient(parsedUserId, dto);
   }
 
@@ -128,7 +128,7 @@ export class UserController {
   ) {
     const parsedUserId =
       typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
-    await this.authService.validateRole(dto.UserId, parsedUserId);
+    await this.authService.validateRole(dto.UserId, parsedUserId, null);
     return await this.userservice.DeletePatientFromList(
       parsedUserId,
       dto.UserId,
@@ -151,7 +151,7 @@ export class UserController {
   async getHeartbeat(@Param('id') PatientId: number, @Body() dto: HeartRate) {
     const parsedPatientId =
       typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
-    await this.authService.validateRole(dto.UserId, parsedPatientId);
+    await this.authService.validateRole(dto.UserId, parsedPatientId, null);
     return await this.userservice.getHeartbeat(
       parsedPatientId,
       dto.startDate,
@@ -163,7 +163,7 @@ export class UserController {
   async getHeartrate(@Param('id') PatientId: number) {
     const parsedPatientId =
       typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
-    await this.authService.validateRole(null, parsedPatientId);
+    await this.authService.validateRole(null, parsedPatientId, null);
     const now = new Date();
     const formattedDate = now.toISOString();
     console.log('actual date', formattedDate.toString());
@@ -181,14 +181,14 @@ export class UserController {
   ) {
     const parsedPatientId =
       typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
-    await this.authService.validateRole(dto.AuthorId, parsedPatientId);
+    await this.authService.validateRole(dto.AuthorId, parsedPatientId, null);
     return await this.userservice.CreateNewNote(dto, parsedPatientId);
   }
   @Get('/patients/:patientId/notes')
   async getNoteList(@Param('patientId') PatientId: number) {
     const parsedPatientId =
       typeof PatientId === 'string' ? parseInt(PatientId, 10) : PatientId;
-    await this.authService.validateRole(null, parsedPatientId);
+    await this.authService.validateRole(null, parsedPatientId, null);
     return await this.userservice.GetNotesLists(parsedPatientId);
   }
   @Put('/notes/:id')
@@ -198,7 +198,7 @@ export class UserController {
   ) {
     const parsedNoteId =
       typeof NoteId === 'string' ? parseInt(NoteId, 10) : NoteId;
-    await this.authService.validateRole(dto.AuthorId, null);
+    await this.authService.validateRole(dto.AuthorId, null, null);
     return this.userservice.UpdateNote(parsedNoteId, dto);
   }
 
@@ -211,7 +211,7 @@ export class UserController {
   // appointment
   @Post('/appointments/')
   async createAppointment(@Body() dto: newAppointment) {
-    await this.authService.validateRole(dto.DoctorId, dto.PatientId);
+    await this.authService.validateRole(dto.DoctorId, dto.PatientId, null);
     return await this.userservice.createAppoinment(
       dto.DoctorId,
       dto.PatientId,
@@ -232,7 +232,7 @@ export class UserController {
   @UseGuards(jwtguard)
   async getAppointmentList(@GetUser() user: Users) {
     console.log('get a request appoitment');
-    await this.authService.validateRole(user.id, null);
+    await this.authService.validateRole(user.id, null, null);
     return await this.userservice.getAppointment(user.id);
   }
 
@@ -245,7 +245,7 @@ export class UserController {
       typeof AppointmentId === 'string'
         ? parseInt(AppointmentId, 10)
         : AppointmentId;
-    await this.authService.validateRole(dto.DoctorId, null);
+    await this.authService.validateRole(dto.DoctorId, null, null);
     return await this.userservice.updateAppointment(parsedAppointmentId, dto);
   }
 
@@ -263,13 +263,13 @@ export class UserController {
     console.log('get notificaion req');
     const parsedUserid =
       typeof UserId === 'string' ? parseInt(UserId, 10) : UserId;
-    await this.authService.validateRole(parsedUserid, null);
+    await this.authService.validateRole(parsedUserid, null, null);
     return await this.userservice.getNotifByUserId(parsedUserid);
   }
 
   @Put('/notification')
   async updateNotification(@Body() dto: UpNotification) {
-    await this.authService.validateRole(dto.UserId, null);
+    await this.authService.validateRole(dto.UserId, null, null);
     return await this.userservice.updateNotification(
       dto.isRead,
       dto.UserId,

@@ -100,7 +100,7 @@ export class AuthService {
     try {
       console.log('validating role');
       console.log(DoctorId);
-      if (DoctorId != null && PatientId != undefined) {
+      if (DoctorId != null && DoctorId != undefined) {
         console.log('role doc not null');
         console.log(DoctorId);
         // const parsedDoctorId =
@@ -144,7 +144,7 @@ export class AuthService {
         }
       }
     } catch (err) {
-      throw new Error('Error while validating role');
+      throw new Error('Error while validating role' + err.message);
     }
   }
   async signToken(
