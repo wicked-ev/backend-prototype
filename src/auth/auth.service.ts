@@ -36,6 +36,7 @@ export class AuthService {
           weight: dto.weight,
           MaxRate: dto.MaxRate,
           MinRate: dto.MinRate,
+          BloodType: dto.BloodType,
           hash,
           Role: Role,
         },
