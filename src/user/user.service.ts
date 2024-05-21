@@ -688,9 +688,43 @@ export class UserService {
   async DeleteUser(UserId: number) {
     try {
       const patient = await this.DoesUserExist(UserId);
+      const account = await this.getAccount(UserId);
+      if (!account) {
+        throw new Error(`user account not found`);
+      }
       if (!patient) {
         throw new Error(`patient not found`);
       }
+      await this.prisma.notification.deleteMany({
+        where: {
+          PatientAccid: account.AccId,
+        },
+      });
+      await this.prisma.notes.deleteMany({
+        where: {
+          PatientId: account.AccId,
+        },
+      });
+      await this.prisma.appointment.deleteMany({
+        where: {
+          PatientId: account.AccId,
+        },
+      });
+      await this.prisma.userListRecords.deleteMany({
+        where: {
+          User: account.AccountOwner,
+        },
+      });
+      await this.prisma.previewerList.deleteMany({
+        where: {
+          PreviewerAccountId: account.AccId,
+        },
+      });
+      await this.prisma.accounts.delete({
+        where: {
+          AccId: account.AccId,
+        },
+      });
       await this.prisma.users.delete({
         where: {
           id: UserId,
